@@ -9,6 +9,7 @@
 
 #include "model.h"
 
+#include <iostream>
 #include <assert.h>
 
 #include <algorithm>
@@ -198,6 +199,11 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
   }
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
     wi_->addRow(grad_, *it, 1.0);
+  }
+  if (nexamples_ % 1000 == 0) {
+    std::cout << "grad: " << grad_ << std::endl;
+    std::cout << "hidden: " << hidden_ << std::endl;
+    std::cout << "output_: " << output_ << std::endl;
   }
 }
 

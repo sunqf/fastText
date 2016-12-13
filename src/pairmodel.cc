@@ -2,6 +2,7 @@
 // Created by sunqf on 2016/12/12.
 //
 
+#include <iostream>
 #include "pairmodel.h"
 #include <assert.h>
 #include "matrix.h"
@@ -21,6 +22,7 @@ namespace fasttext {
     second_embedding_ = second_embedding;
     second_w1_ = second_w1;
     args_ = args;
+    nexamples_ = 1;
     loss_ = 0.0;
     initSigmoid();
     initLog();
@@ -41,12 +43,13 @@ namespace fasttext {
   real PairModel::predict(const std::vector<int32_t>& first,
                           const std::vector<int32_t>& second) {
     computeHidden(first_embedding_, first, first_hidden1_);
-    first_output_.mul(*first_w1_, first_hidden1_);
+    //first_output_.mul(*first_w1_, first_hidden1_);
 
     computeHidden(second_embedding_, second, second_output_);
-    second_output_.mul(*second_w1_, second_hidden1_);
+    //second_output_.mul(*second_w1_, second_hidden1_);
 
-    return sigmoid(dot(first_output_, second_output_));
+    //return sigmoid(dot(first_output_, second_output_));
+    return sigmoid(dot(first_hidden1_, second_hidden1_));
   }
 
   void PairModel::update(const std::vector<int32_t>& input,
@@ -54,10 +57,11 @@ namespace fasttext {
                          const Vector& hidden1,
                          std::shared_ptr<Matrix> w1,
                          Vector &grad) {
+    /*
     for (int32_t i = 0; i < osz_; i++) {
-      grad_.addRow(*w1, i, 1.0);
+      grad.addRow(*w1, i, 1.0);
       w1->addRow(hidden1, i, 1.0);
-    }
+    }*/
     grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
       embedding->addRow(grad, *it, 1.0);
@@ -69,30 +73,46 @@ namespace fasttext {
                          const bool label,
                          real lr) {
     computeHidden(first_embedding_, first, first_hidden1_);
-    first_output_.mul(*first_w1_, first_hidden1_);
+    //first_output_.mul(*first_w1_, first_hidden1_);
 
     computeHidden(second_embedding_, second, second_hidden1_);
-    second_output_.mul(*second_w1_, second_hidden1_);
+    //second_output_.mul(*second_w1_, second_hidden1_);
 
-    real prob = sigmoid(dot(first_output_, second_output_));
-
+    //real prob = sigmoid(dot(first_output_, second_output_));
+    real prob = sigmoid(dot(first_hidden1_, second_hidden1_));
     if (label) {
       loss_ += -log(prob);
     } else {
       loss_ += -log(1.0 - prob);
     }
+    nexamples_ += 1;
 
     real alpha = lr * (real(label) - prob);
 
     // update first
-    Vector first_grad = Vector(second_output_.size());
-    first_grad.addVec(second_output_, alpha);
+    //Vector first_grad = Vector(second_output_.size());
+    Vector first_grad = Vector(second_hidden1_.size());
+    first_grad.zero();
+    //first_grad.addVec(second_output_, alpha);
+    first_grad.addVec(second_hidden1_, alpha);
     update(first, first_embedding_, first_hidden1_, first_w1_, first_grad);
-
     // update second
-    Vector second_grad = Vector(first_output_.size());
-    second_grad.addVec(first_output_, alpha);
+    //Vector second_grad = Vector(first_output_.size());
+    Vector second_grad = Vector(first_hidden1_.size());
+    second_grad.zero();
+    //second_grad.addVec(first_output_, alpha);
+    second_grad.addVec(first_hidden1_, alpha);
     update(second, second_embedding_, second_hidden1_, second_w1_, second_grad);
+
+    if (nexamples_ % 1000 == 0) {
+      std::cout << "first_hidden: " << first_hidden1_ << std::endl;
+      std::cout << "first_output: " << first_output_ << std::endl;
+      std::cout << "second_hidden: " << second_hidden1_ << std::endl;
+      std::cout << "second_output: " << second_output_ << std::endl;
+      std::cout << "prob: " << prob << "   label: " << label << " alpha: " << alpha << std::endl;
+      std::cout << "first_grad: " << first_grad << std::endl;
+      std::cout << "second_grad: " << second_grad << std::endl;
+    }
   }
 
 

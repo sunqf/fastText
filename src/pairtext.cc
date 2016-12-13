@@ -279,15 +279,17 @@ namespace fasttext {
     const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
     int64_t localTokenCount = 0;
     std::vector<int32_t> first_words, second_words;
-    real label;
+    bool label;
     while (tokenCount < args_->epoch * ntokens) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
       getline(ifs, line);
       std::vector<std::string> items;
       utils::split(line, '\t', items);
-      if (items[0] == "0") label = 0;
-      else if(items[1] == "1") label = 1;
+
+      if (items[0] == "0") label = false;
+      else if(items[0] == "1") label = true;
+
       localTokenCount += first_dict_->getLine(items[1], first_words, model.rng);
       localTokenCount += second_dict_->getLine(items[2], second_words, model.rng);
       if (args_->model == model_name::sup) {
@@ -361,21 +363,21 @@ namespace fasttext {
       std::cerr << "Cannot use stdin for training!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::ifstream ifs(args_->input + ".first");
-    if (!ifs.is_open()) {
+    std::ifstream first_fs(args_->input + ".first");
+    if (!first_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    first_dict_->readFromFile(ifs);
-    ifs.close();
+    first_dict_->readFromFile(first_fs);
+    first_fs.close();
 
-    ifs.open(args_->input + ".second");
-    if (!ifs.is_open()) {
+    std::ifstream second_fs(args_->input + ".second");
+    if (!second_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    second_dict_->readFromFile(ifs);
-    ifs.close();
+    second_dict_->readFromFile(second_fs);
+    second_fs.close();
 
     if (args_->pretrainedVectors.size() != 0) {
       loadVectors(args_->pretrainedVectors, first_dict_, first_embedding_);
@@ -394,8 +396,8 @@ namespace fasttext {
     first_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
     second_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
 
-    first_w1_->zero();
-    second_w1_->zero();
+    first_w1_->uniform(1.0 / args_->dim);
+    second_w1_->uniform(1.0 / args_->dim);
 
     start = clock();
     tokenCount = 0;

@@ -40,6 +40,8 @@ namespace fasttext {
     int32_t osz_;
     Vector grad_;
 
+
+    long nexamples_;
     real loss_;
 
     real* t_sigmoid;
@@ -77,7 +79,7 @@ namespace fasttext {
                 const bool label,
                 real lr);
 
-    real getLoss() { return loss_; }
+    real getLoss() { return loss_ / nexamples_; }
 
     std::minstd_rand rng;
   };
