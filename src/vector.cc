@@ -13,6 +13,8 @@
 
 #include <iomanip>
 
+#include <math.h>
+
 #include "matrix.h"
 #include "utils.h"
 
@@ -61,6 +63,12 @@ void Vector::addRow(const Matrix& A, int64_t i, real a) {
   }
 }
 
+void Vector::addVec(const Vector& vec, real a) {
+  assert(m_ == vec.m_);
+  for (int64_t i = 0; i < m_; i++) {
+    data_[i] += a * vec.data_[i];
+  }
+}
 void Vector::mul(const Matrix& A, const Vector& vec) {
   assert(A.m_ == m_);
   assert(A.n_ == vec.m_);
@@ -92,8 +100,7 @@ const real& Vector::operator[](int64_t i) const {
   return data_[i];
 }
 
-std::ostream& operator<<(std::ostream& os, const Vector& v)
-{
+std::ostream& operator<<(std::ostream& os, const Vector& v) {
   os << std::setprecision(5);
   for (int64_t j = 0; j < v.m_; j++) {
     os << v.data_[j] << ' ';
@@ -101,4 +108,12 @@ std::ostream& operator<<(std::ostream& os, const Vector& v)
   return os;
 }
 
+real dot(const Vector& first, const Vector& second) {
+  assert(first.size() == second.size());
+  real dist = 0.0;
+  for (int64_t i = 0; i < first.size(); i++) {
+    dist += first[i] * second[i];
+  }
+  return dist;
+}
 }

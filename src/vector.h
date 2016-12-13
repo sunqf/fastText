@@ -36,12 +36,13 @@ class Vector {
     void mul(real);
     void addRow(const Matrix&, int64_t);
     void addRow(const Matrix&, int64_t, real);
+    void addVec(const Vector&, real);
     void mul(const Matrix&, const Vector&);
     int64_t argmax();
 };
 
 std::ostream& operator<<(std::ostream&, const Vector&);
-
+real dot(const Vector& first, const Vector& second);
 }
 
 #endif

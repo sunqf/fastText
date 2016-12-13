@@ -11,6 +11,7 @@
 #define FASTTEXT_UTILS_H
 
 #include <fstream>
+#include <vector>
 
 namespace fasttext {
 
@@ -18,6 +19,8 @@ namespace utils {
 
   int64_t size(std::ifstream&);
   void seek(std::ifstream&, int64_t);
+
+  void split(std::string line, char delim, std::vector<std::string>& items);
 }
 
 }

@@ -16,6 +16,7 @@
 #include <iterator>
 #include <unordered_map>
 #include <cctype>
+#include <sstream>
 
 namespace fasttext {
 
@@ -278,6 +279,29 @@ int32_t Dictionary::getLine(std::istream& in,
   }
   return ntokens;
 }
+
+int32_t Dictionary::getLine(std::string &line,
+                            std::vector<int32_t>& words,
+                            std::minstd_rand& rng) const {
+  std::uniform_real_distribution<> uniform(0, 1);
+  std::string token;
+  int32_t ntokens = 0;
+  words.clear();
+  std::stringstream ss(line);
+  while (readWord(ss, token)) {
+    if (token == EOS) break;
+    int32_t wid = getId(token);
+    if (wid < 0) continue;
+    entry_type type = getType(wid);
+    ntokens++;
+    if (type == entry_type::word && !discard(wid, uniform(rng))) {
+      words.push_back(wid);
+    }
+    if (words.size() > MAX_LINE_SIZE && args_->model != model_name::sup) break;
+  }
+  return ntokens;
+}
+
 
 std::string Dictionary::getLabel(int32_t lid) const {
   assert(lid >= 0);

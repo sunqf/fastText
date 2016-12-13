@@ -77,6 +77,7 @@ class Dictionary {
     void addNgrams(std::vector<int32_t>&, int32_t) const;
     int32_t getLine(std::istream&, std::vector<int32_t>&,
                     std::vector<int32_t>&, std::minstd_rand&) const;
+    int32_t getLine(std::string&, std::vector<int32_t>&, std::minstd_rand&) const;
     void threshold(int64_t, int64_t);
 };
 

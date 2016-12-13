@@ -25,6 +25,17 @@ namespace utils {
     ifs.clear();
     ifs.seekg(std::streampos(pos));
   }
+
+  void split(std::string line, char delim, std::vector<std::string>& items) {
+    unsigned long start = 0;
+    unsigned long end = 0;
+    while (start < line.length()) {
+      while (end < line.length() && line[end] != delim) ++end;
+      items.push_back(line.substr(start, end - start));
+      while (end < line.length() && line[end] == delim) ++end;
+      start = end;
+    }
+  }
 }
 
 }

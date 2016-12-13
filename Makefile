@@ -9,7 +9,7 @@
 
 CXX = c++
 CXXFLAGS = -pthread -std=c++0x
-OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o
+OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
@@ -17,6 +17,7 @@ opt: fasttext
 
 debug: CXXFLAGS += -g -O0 -fno-inline
 debug: fasttext
+debug: pairtext
 
 args.o: src/args.cc src/args.h
 	$(CXX) $(CXXFLAGS) -c src/args.cc
@@ -42,5 +43,14 @@ fasttext.o: src/fasttext.cc src/*.h
 fasttext: $(OBJS) src/fasttext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/main.cc -o fasttext
 
+pairmodel.o: src/pairmodel.cc src/pairmodel.h src/args.h
+	$(CXX) $(CXXFLAGS) -c src/pairmodel.cc
+
+pairtext.o: src/pairtext.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/pairtext.cc
+
+pairtext: $(OBJS) src/pairtext.cc
+	$(CXX) $(CXXFLAGS) $(OBJS) src/pairmain.cc -o pairtext
+
 clean:
-	rm -rf *.o fasttext
+	rm -rf *.o fasttext pairtext
