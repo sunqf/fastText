@@ -19,13 +19,13 @@
 namespace fasttext {
 
   void PairText::getVector(std::shared_ptr<Dictionary> dict,
-                           std::shared_ptr<Matrix> input,
+                           std::shared_ptr<Matrix> embedding,
                            Vector& vec,
                            const std::string& word) {
     const std::vector<int32_t>& ngrams = dict->getNgrams(word);
     vec.zero();
     for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
-      vec.addRow(*first_embedding_, *it);
+      vec.addRow(*embedding, *it);
     }
     if (ngrams.size() > 0) {
       vec.mul(1.0 / ngrams.size());
@@ -142,9 +142,8 @@ namespace fasttext {
   void PairText::test(std::istream& in) {
     int32_t nexamples = 0;
     int32_t nTrue = 0; // TT + TF
-    int32_t nTT = 0; // TT
+    double nTT = 0; // TT
     double precision = 0.0;
-    int32_t label;
     std::vector<int32_t> first_line;
     std::vector<int32_t> second_line;
 
@@ -153,6 +152,8 @@ namespace fasttext {
       getline(in, line);
       std::vector<std::string> items;
       utils::split(line, '\t', items);
+      bool label = true;
+      if (items[0] == "0") label = false;
       first_dict_->getLine(items[1], first_line, model_->rng);
       first_dict_->addNgrams(first_line, args_->wordNgrams);
 
@@ -160,13 +161,13 @@ namespace fasttext {
       second_dict_->addNgrams(second_line, args_-> wordNgrams);
       if (first_line.size() > 0 && second_line.size() > 0) {
         real prob = model_->predict(first_line, second_line);
-        if (label == 1) {
+        if (label == true) {
           nTrue++;
           if (prob > 0.5) {
             precision += 1.0;
             nTT++;
           }
-        } else if (prob < 0.5 && label == 0) precision += 1.0;
+        } else if (prob < 0.5 && label == false) precision += 1.0;
         nexamples++;
       }
     }
@@ -279,9 +280,13 @@ namespace fasttext {
     int64_t localTokenCount = 0;
     std::vector<int32_t> first_words, second_words;
     bool label;
-    while (tokenCount < args_->epoch * ntokens && ifs.peek() != EOF) {
+    while (tokenCount < args_->epoch * ntokens) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
+      if (ifs.eof()) {
+        ifs.clear();
+        ifs.seekg(std::streampos(0));
+      }
       getline(ifs, line);
       if (line.length() == 0) continue;
       std::vector<std::string> items;
@@ -334,7 +339,7 @@ namespace fasttext {
       std::string word;
       in >> word;
       words.push_back(word);
-      first_dict_->add(word);
+      dict->add(word);
       for (size_t j = 0; j < dim; j++) {
         in >> mat->data_[i * dim + j];
       }

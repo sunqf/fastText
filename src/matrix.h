@@ -37,7 +37,8 @@ class Matrix {
     void uniform(real);
     real dotRow(const Vector&, int64_t);
     void addRow(const Vector&, int64_t, real);
-
+    void addMatrix(const Vector& left, const Vector& right);
+    Vector getRow(const int64_t);
     void save(std::ostream&);
     void load(std::istream&);
 };

@@ -14,6 +14,7 @@ INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
 opt: fasttext
+opt: pairtext
 
 debug: CXXFLAGS += -g -O0 -fno-inline
 debug: fasttext

@@ -20,7 +20,7 @@
 #define MAX_SIGMOID 8
 #define LOG_TABLE_SIZE 512
 
-
+// warning: non thread-safe
 namespace fasttext {
   class PairModel {
   private:
@@ -30,15 +30,19 @@ namespace fasttext {
     std::shared_ptr<Matrix> second_w1_;
 
     Vector first_hidden1_;
-    Vector second_hidden1_;
+    Vector first_hidden1_grad_;
     Vector first_output_;
+    Vector first_output_grad_;
+
+    Vector second_hidden1_;
+    Vector second_hidden1_grad_;
     Vector second_output_;
+    Vector second_output_grad_;
     std::shared_ptr<Args> args_;
 
-    int32_t hsz_;
     int32_t isz_;
+    int32_t hsz_;
     int32_t osz_;
-    Vector grad_;
 
 
     long nexamples_;
@@ -69,13 +73,15 @@ namespace fasttext {
                  const std::vector<int32_t>& second);
 
     void update(const std::vector<int32_t>& input,
-                           std::shared_ptr<Matrix> embedding,
-                           const Vector& hidden1,
-                           std::shared_ptr<Matrix> w1,
-                           Vector &grad);
+                std::shared_ptr<Matrix> embedding,
+                const Vector& hidden1,
+                Vector& hidden1_grad,
+                std::shared_ptr<Matrix> w1,
+                const Vector& output,
+                const Vector& output_grad);
 
-    void update(const std::vector<int32_t>& first,
-                const std::vector<int32_t>& second,
+    void update(const std::vector<int32_t>& first_input,
+                const std::vector<int32_t>& second_input,
                 const bool label,
                 real lr);
 

@@ -310,7 +310,7 @@ void FastText::loadVectors(std::string filename) {
   in.close();
 
   dict_->threshold(1, 0);
-  input_ = std::make_shared<Matrix>(dict_->nwords()+args_->bucket, args_->dim);
+  input_ = std::make_shared<Matrix>(dict_->nwords() + args_->bucket, args_->dim);
   input_->uniform(1.0 / args_->dim);
 
   for (size_t i = 0; i < n; i++) {
@@ -341,7 +341,7 @@ void FastText::train(std::shared_ptr<Args> args) {
   if (args_->pretrainedVectors.size() != 0) {
     loadVectors(args_->pretrainedVectors);
   } else {
-    input_ = std::make_shared<Matrix>(dict_->nwords()+args_->bucket, args_->dim);
+    input_ = std::make_shared<Matrix>(dict_->nwords() + args_->bucket, args_->dim);
     input_->uniform(1.0 / args_->dim);
   }
 

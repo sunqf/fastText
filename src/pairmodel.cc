@@ -14,9 +14,10 @@ namespace fasttext {
   PairModel::PairModel(std::shared_ptr<Matrix> first_embedding, std::shared_ptr<Matrix> first_w1,
                        std::shared_ptr<Matrix> second_embedding, std::shared_ptr<Matrix> second_w1,
                        std::shared_ptr<Args> args, int32_t seed)
-      : first_hidden1_(args->dim), first_output_(args->dim),
-        second_hidden1_(args->dim), second_output_(args->dim),
-        grad_(args->dim), rng(seed) {
+      : first_hidden1_(args->dim), first_hidden1_grad_(args->dim),
+        first_output_(args->dim), first_output_grad_(args->dim),
+        second_hidden1_(args->dim), second_hidden1_grad_(args->dim),
+        second_output_(args->dim), second_output_grad_(args->dim), rng(seed) {
     first_embedding_ = first_embedding;
     first_w1_ = first_w1;
     second_embedding_ = second_embedding;
@@ -48,7 +49,7 @@ namespace fasttext {
     computeHidden(first_embedding_, first, first_hidden1_);
     first_output_.mul(*first_w1_, first_hidden1_);
 
-    computeHidden(second_embedding_, second, second_output_);
+    computeHidden(second_embedding_, second, second_hidden1_);
     second_output_.mul(*second_w1_, second_hidden1_);
 
     return sigmoid(dot(first_output_, second_output_));
@@ -57,26 +58,28 @@ namespace fasttext {
   void PairModel::update(const std::vector<int32_t>& input,
                          std::shared_ptr<Matrix> embedding,
                          const Vector& hidden1,
+                         Vector& hidden1_grad,
                          std::shared_ptr<Matrix> w1,
-                         Vector &grad) {
-    for (int32_t i = 0; i < osz_; i++) {
-      grad.addRow(*w1, i, 1.0);
-      w1->addRow(hidden1, i, 1.0);
-    }
-    grad.mul(1.0 / input.size());
+                         const Vector& output,
+                         const Vector& output_grad) {
+    hidden1_grad.zero();
+    hidden1_grad.mul(output_grad, *w1);
+    w1->addMatrix(output_grad, hidden1);
+
+    hidden1_grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
-      embedding->addRow(grad, *it, 1.0);
+      embedding->addRow(hidden1_grad, *it, 1.0);
     }
   }
 
-  void PairModel::update(const std::vector<int32_t>& first,
-                         const std::vector<int32_t>& second,
+  void PairModel::update(const std::vector<int32_t>& first_input,
+                         const std::vector<int32_t>& second_input,
                          const bool label,
                          real lr) {
-    computeHidden(first_embedding_, first, first_hidden1_);
+    computeHidden(first_embedding_, first_input, first_hidden1_);
     first_output_.mul(*first_w1_, first_hidden1_);
 
-    computeHidden(second_embedding_, second, second_hidden1_);
+    computeHidden(second_embedding_, second_input, second_hidden1_);
     second_output_.mul(*second_w1_, second_hidden1_);
 
     real prob = sigmoid(dot(first_output_, second_output_));
@@ -90,25 +93,27 @@ namespace fasttext {
     real alpha = lr * (real(label) - prob);
 
     // update first
-    Vector first_grad = Vector(second_output_.size());
-    first_grad.zero();
-    first_grad.addVec(second_output_, alpha);
-    update(first, first_embedding_, first_hidden1_, first_w1_, first_grad);
+    first_output_grad_.zero();
+    first_output_grad_.addVec(second_output_, alpha);
+    update(first_input,
+           first_embedding_, first_hidden1_, first_hidden1_grad_,
+           first_w1_, first_output_, first_output_grad_);
 
     // update second
-    Vector second_grad = Vector(first_output_.size());
-    second_grad.zero();
-    second_grad.addVec(first_output_, alpha);
-    update(second, second_embedding_, second_hidden1_, second_w1_, second_grad);
+    second_output_grad_.zero();
+    second_output_grad_.addVec(first_output_, alpha);
+    update(second_input,
+           second_embedding_, second_hidden1_, second_hidden1_grad_,
+           second_w1_, second_output_, second_output_grad_);
 
-    if (nexamples_ % 1000 == 0) {
+    if (nexamples_ % 10000 == 0 && args_->verbose > 0) {
       std::cout << "first_hidden: " << first_hidden1_ << std::endl;
       std::cout << "first_output: " << first_output_ << std::endl;
       std::cout << "second_hidden: " << second_hidden1_ << std::endl;
       std::cout << "second_output: " << second_output_ << std::endl;
       std::cout << "prob: " << prob << "   label: " << label << " alpha: " << alpha << std::endl;
-      std::cout << "first_grad: " << first_grad << std::endl;
-      std::cout << "second_grad: " << second_grad << std::endl;
+      std::cout << "first_grad: " << first_output_grad_ << std::endl;
+      std::cout << "second_grad: " << second_output_grad_ << std::endl;
     }
   }
 

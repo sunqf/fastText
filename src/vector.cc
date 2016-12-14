@@ -80,6 +80,18 @@ void Vector::mul(const Matrix& A, const Vector& vec) {
   }
 }
 
+
+void Vector::mul(const Vector& vec, const Matrix& A) {
+  assert(vec.m_ == A.m_);
+  assert(m_ == A.n_);
+  for (int64_t j = 0; j < m_; j++) {
+    data_[j] = 0.0;
+    for (int64_t i = 0; i < vec.m_; i++) {
+      data_[j] += vec[i] * A.data_[i * A.n_ + j];
+    }
+  }
+}
+
 int64_t Vector::argmax() {
   real max = data_[0];
   int64_t argmax = 0;
@@ -109,7 +121,7 @@ std::ostream& operator<<(std::ostream& os, const Vector& v) {
 }
 
 real dot(const Vector& first, const Vector& second) {
-  assert(first.size() == second.size());
+  assert(first.m_ == second.m_);
   real dist = 0.0;
   for (int64_t i = 0; i < first.size(); i++) {
     dist += first[i] * second[i];

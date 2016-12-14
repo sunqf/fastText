@@ -38,6 +38,7 @@ class Vector {
     void addRow(const Matrix&, int64_t, real);
     void addVec(const Vector&, real);
     void mul(const Matrix&, const Vector&);
+    void mul(const Vector& vec, const Matrix& A);
     int64_t argmax();
 };
 
