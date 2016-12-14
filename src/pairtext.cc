@@ -153,7 +153,6 @@ namespace fasttext {
       getline(in, line);
       std::vector<std::string> items;
       utils::split(line, '\t', items);
-      in >> label;
       first_dict_->getLine(items[1], first_line, model_->rng);
       first_dict_->addNgrams(first_line, args_->wordNgrams);
 
@@ -280,10 +279,11 @@ namespace fasttext {
     int64_t localTokenCount = 0;
     std::vector<int32_t> first_words, second_words;
     bool label;
-    while (tokenCount < args_->epoch * ntokens) {
+    while (tokenCount < args_->epoch * ntokens && ifs.peek() != EOF) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
       getline(ifs, line);
+      if (line.length() == 0) continue;
       std::vector<std::string> items;
       utils::split(line, '\t', items);
 

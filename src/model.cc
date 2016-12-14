@@ -47,6 +47,7 @@ real Model::binaryLogistic(int32_t target, bool label, real lr) {
   real alpha = lr * (real(label) - score);
   grad_.addRow(*wo_, target, alpha);
   wo_->addRow(hidden_, target, alpha);
+  std::cout << "label: " << label << " score: " << score << std::endl;
   if (label) {
     return -log(score);
   } else {

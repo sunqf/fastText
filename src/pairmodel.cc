@@ -23,6 +23,9 @@ namespace fasttext {
     second_w1_ = second_w1;
     args_ = args;
     nexamples_ = 1;
+    hsz_ = args_->dim;
+    isz_ = args_->dim;
+    osz_ = args_->dim;
     loss_ = 0.0;
     initSigmoid();
     initLog();
@@ -43,13 +46,12 @@ namespace fasttext {
   real PairModel::predict(const std::vector<int32_t>& first,
                           const std::vector<int32_t>& second) {
     computeHidden(first_embedding_, first, first_hidden1_);
-    //first_output_.mul(*first_w1_, first_hidden1_);
+    first_output_.mul(*first_w1_, first_hidden1_);
 
     computeHidden(second_embedding_, second, second_output_);
-    //second_output_.mul(*second_w1_, second_hidden1_);
+    second_output_.mul(*second_w1_, second_hidden1_);
 
-    //return sigmoid(dot(first_output_, second_output_));
-    return sigmoid(dot(first_hidden1_, second_hidden1_));
+    return sigmoid(dot(first_output_, second_output_));
   }
 
   void PairModel::update(const std::vector<int32_t>& input,
@@ -57,11 +59,10 @@ namespace fasttext {
                          const Vector& hidden1,
                          std::shared_ptr<Matrix> w1,
                          Vector &grad) {
-    /*
     for (int32_t i = 0; i < osz_; i++) {
       grad.addRow(*w1, i, 1.0);
       w1->addRow(hidden1, i, 1.0);
-    }*/
+    }
     grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
       embedding->addRow(grad, *it, 1.0);
@@ -73,13 +74,12 @@ namespace fasttext {
                          const bool label,
                          real lr) {
     computeHidden(first_embedding_, first, first_hidden1_);
-    //first_output_.mul(*first_w1_, first_hidden1_);
+    first_output_.mul(*first_w1_, first_hidden1_);
 
     computeHidden(second_embedding_, second, second_hidden1_);
-    //second_output_.mul(*second_w1_, second_hidden1_);
+    second_output_.mul(*second_w1_, second_hidden1_);
 
-    //real prob = sigmoid(dot(first_output_, second_output_));
-    real prob = sigmoid(dot(first_hidden1_, second_hidden1_));
+    real prob = sigmoid(dot(first_output_, second_output_));
     if (label) {
       loss_ += -log(prob);
     } else {
@@ -90,18 +90,15 @@ namespace fasttext {
     real alpha = lr * (real(label) - prob);
 
     // update first
-    //Vector first_grad = Vector(second_output_.size());
-    Vector first_grad = Vector(second_hidden1_.size());
+    Vector first_grad = Vector(second_output_.size());
     first_grad.zero();
-    //first_grad.addVec(second_output_, alpha);
-    first_grad.addVec(second_hidden1_, alpha);
+    first_grad.addVec(second_output_, alpha);
     update(first, first_embedding_, first_hidden1_, first_w1_, first_grad);
+
     // update second
-    //Vector second_grad = Vector(first_output_.size());
-    Vector second_grad = Vector(first_hidden1_.size());
+    Vector second_grad = Vector(first_output_.size());
     second_grad.zero();
-    //second_grad.addVec(first_output_, alpha);
-    second_grad.addVec(first_hidden1_, alpha);
+    second_grad.addVec(first_output_, alpha);
     update(second, second_embedding_, second_hidden1_, second_w1_, second_grad);
 
     if (nexamples_ % 1000 == 0) {
