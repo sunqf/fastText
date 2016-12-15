@@ -20,7 +20,7 @@ namespace utils {
   int64_t size(std::ifstream&);
   void seek(std::ifstream&, int64_t);
 
-  void split(std::string line, char delim, std::vector<std::string>& items);
+  std::vector<std::string> split(std::string line, char delim);
 }
 
 }

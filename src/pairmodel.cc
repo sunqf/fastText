@@ -105,16 +105,6 @@ namespace fasttext {
     update(second_input,
            second_embedding_, second_hidden1_, second_hidden1_grad_,
            second_w1_, second_output_, second_output_grad_);
-
-    if (nexamples_ % 10000 == 0 && args_->verbose > 0) {
-      std::cout << "first_hidden: " << first_hidden1_ << std::endl;
-      std::cout << "first_output: " << first_output_ << std::endl;
-      std::cout << "second_hidden: " << second_hidden1_ << std::endl;
-      std::cout << "second_output: " << second_output_ << std::endl;
-      std::cout << "prob: " << prob << "   label: " << label << " alpha: " << alpha << std::endl;
-      std::cout << "first_grad: " << first_output_grad_ << std::endl;
-      std::cout << "second_grad: " << second_output_grad_ << std::endl;
-    }
   }
 
 

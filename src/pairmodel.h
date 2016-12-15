@@ -89,5 +89,12 @@ namespace fasttext {
 
     std::minstd_rand rng;
   };
+
+
+  class PairModelTrainer {
+  private:
+  public:
+    
+  };
 }
 #endif //FASTTEXT_PAIRMODEL_H

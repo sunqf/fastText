@@ -150,8 +150,7 @@ namespace fasttext {
     while (in.peek() != EOF) {
       std::string line;
       getline(in, line);
-      std::vector<std::string> items;
-      utils::split(line, '\t', items);
+      std::vector<std::string> items = utils::split(line, '\t');
       bool label = true;
       if (items[0] == "0") label = false;
       first_dict_->getLine(items[1], first_line, model_->rng);
@@ -184,8 +183,8 @@ namespace fasttext {
 
     std::string line;
     getline(in, line);
-    std::vector<std::string> items;
-    utils::split(line, '\t', items);
+    std::vector<std::string> items = utils::split(line, '\t');
+
     first_dict_->getLine(items[1], first_words, model_->rng);
     first_dict_->addNgrams(first_words, args_->wordNgrams);
 
@@ -285,23 +284,23 @@ namespace fasttext {
       real lr = args_->lr * (1.0 - progress);
       if (ifs.eof()) {
         ifs.clear();
-        ifs.seekg(std::streampos(0));
+        ifs.seekg(threadId * utils::size(ifs) / args_->thread);
+        getline(ifs, line);
       }
       getline(ifs, line);
       if (line.length() == 0) continue;
-      std::vector<std::string> items;
-      utils::split(line, '\t', items);
+      std::vector<std::string> items = utils::split(line, '\t');
 
       if (items[0] == "0") label = false;
       else if(items[0] == "1") label = true;
 
       localTokenCount += first_dict_->getLine(items[1], first_words, model.rng);
       localTokenCount += second_dict_->getLine(items[2], second_words, model.rng);
-      if (args_->model == model_name::sup) {
-        first_dict_->addNgrams(first_words, args_->wordNgrams);
-        second_dict_->addNgrams(second_words, args_->wordNgrams);
-        supervised(model, lr, first_words, second_words, label);
-      }
+
+      first_dict_->addNgrams(first_words, args_->wordNgrams);
+      second_dict_->addNgrams(second_words, args_->wordNgrams);
+      supervised(model, lr, first_words, second_words, label);
+
       if (localTokenCount > args_->lrUpdateRate) {
         tokenCount += localTokenCount;
         localTokenCount = 0;
@@ -384,19 +383,11 @@ namespace fasttext {
     second_dict_->readFromFile(second_fs);
     second_fs.close();
 
-    if (args_->pretrainedVectors.size() != 0) {
-      loadVectors(args_->pretrainedVectors, first_dict_, first_embedding_);
-    } else {
-      first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);
-      first_embedding_->uniform(1.0 / args_->dim);
-    }
+    first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);
+    first_embedding_->uniform(1.0 / args_->dim);
 
-    if (args_->pretrainedVectors.size() != 0) {
-      loadVectors(args_->pretrainedVectors, second_dict_, second_embedding_);
-    } else {
-      second_embedding_ = std::make_shared<Matrix>(second_dict_->nwords() + args_->bucket, args_->dim);
-      second_embedding_->uniform(1.0 / args_->dim);
-    }
+    second_embedding_ = std::make_shared<Matrix>(second_dict_->nwords() + args_->bucket, args_->dim);
+    second_embedding_->uniform(1.0 / args_->dim);
 
     first_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
     second_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
