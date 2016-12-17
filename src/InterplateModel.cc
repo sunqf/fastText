@@ -1,0 +1,119 @@
+//
+// Created by sunqf on 2016/12/15.
+//
+
+#include <iostream>
+#include "InterplateModel.h"
+#include <assert.h>
+#include "matrix.h"
+#include "args.h"
+#include "real.h"
+
+
+namespace fasttext {
+InterplateModel::InterplateModel(std::shared_ptr <Matrix> first_embedding,
+                                 std::shared_ptr <Matrix> second_embedding,
+                                 std::shared_ptr <Matrix> interplate,
+                                 std::shared_ptr <Args> args,
+                                 int32_t seed)
+    : first_embedding_(first_embedding), second_embedding_(second_embedding),
+      interplate_(interplate),
+      first_hidden1_(args->dim), first_hidden1_grad_(args->dim),
+      second_hidden1_(args->dim), second_hidden1_grad_(args->dim),
+      args_(args), rng(seed) {
+  initSigmoid();
+  initLog();
+}
+
+void InterplateModel::computeHidden(std::shared_ptr <Matrix> embedding,
+                                    std::vector <int32_t> words,
+                                    Vector &hidden) {
+  //assert(hidden.size() == hsz_);
+  hidden.zero();
+  for (auto it = words.cbegin(); it != words.cend(); ++it) {
+    hidden.addRow(*embedding, *it);
+  }
+  hidden.mul(1.0 / words.size());
+}
+
+real InterplateModel::predict(const std::vector <int32_t> &first_line,
+                              const std::vector <int32_t> &second_line) {
+  computeHidden(first_embedding_, first_line, first_hidden1_);
+  computeHidden(second_embedding_, second_line, second_hidden1_);
+
+  return sigmoid(xMy(first_hidden1_, *interplate_, second_hidden1_));
+}
+
+void InterplateModel::update(const std::vector <int32_t> &first_line,
+                             const std::vector <int32_t> &second_line,
+                             const bool label,
+                             real lr,
+                             real weight) {
+  computeHidden(first_embedding_, first_line, first_hidden1_);
+  computeHidden(second_embedding_, second_line, second_hidden1_);
+  real prob = sigmoid(xMy(first_hidden1_, *interplate_, second_hidden1_));
+  if (label) {
+    loss_ += -log(prob) * weight;
+  } else {
+    loss_ += -log(1.0 - prob) * weight;
+  }
+  nexamples_ += 1;
+
+  real alpha = weight * lr * (real(label) - prob);
+
+  first_hidden1_grad_.zero();
+  first_hidden1_grad_.mul(*interplate_, second_hidden1_);
+  first_hidden1_grad_.mul(alpha * 1.0 / first_line.size());
+
+
+  second_hidden1_grad_.zero();
+  second_hidden1_grad_.mul(first_hidden1_, *interplate_);
+  second_hidden1_grad_.mul(alpha * 1.0 / second_line.size());
+
+  interplate_->add(first_hidden1_, second_hidden1_, alpha);
+
+  for (auto it = first_line.cbegin(); it != first_line.cend(); ++it) {
+    first_embedding_->addRow(first_hidden1_grad_, *it, 1.0);
+  }
+  for (auto it = second_line.cbegin(); it != second_line.cend(); ++it) {
+    second_embedding_->addRow(second_hidden1_grad_, *it, 1.0);
+  }
+}
+
+void InterplateModel::initSigmoid() {
+  t_sigmoid = new real[SIGMOID_TABLE_SIZE + 1];
+  for (int i = 0; i < SIGMOID_TABLE_SIZE + 1; i++) {
+    real x = real(i * 2 * MAX_SIGMOID) / SIGMOID_TABLE_SIZE - MAX_SIGMOID;
+    t_sigmoid[i] = 1.0 / (1.0 + std::exp(-x));
+  }
+}
+
+void InterplateModel::initLog() {
+  t_log = new real[LOG_TABLE_SIZE + 1];
+  for (int i = 0; i < LOG_TABLE_SIZE + 1; i++) {
+    real x = (real(i) + 1e-5) / LOG_TABLE_SIZE;
+    t_log[i] = std::log(x);
+  }
+}
+
+real InterplateModel::log(real x) const {
+  if (x > 1.0) {
+    return 0.;
+  }
+  int i = int(x * LOG_TABLE_SIZE);
+  return t_log[i];
+}
+
+real InterplateModel::sigmoid(real x) const {
+  if (x < -MAX_SIGMOID) {
+    return 0.0;
+  } else if (x > MAX_SIGMOID) {
+    return 1.0;
+  } else {
+    int i = int((x + MAX_SIGMOID) * SIGMOID_TABLE_SIZE / MAX_SIGMOID / 2);
+    return t_sigmoid[i];
+  }
+}
+}
+
+

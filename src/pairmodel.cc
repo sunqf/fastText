@@ -75,7 +75,8 @@ namespace fasttext {
   void PairModel::update(const std::vector<int32_t>& first_input,
                          const std::vector<int32_t>& second_input,
                          const bool label,
-                         real lr) {
+                         real lr,
+                         real weight) {
     computeHidden(first_embedding_, first_input, first_hidden1_);
     first_output_.mul(*first_w1_, first_hidden1_);
 
@@ -84,13 +85,13 @@ namespace fasttext {
 
     real prob = sigmoid(dot(first_output_, second_output_));
     if (label) {
-      loss_ += -log(prob);
+      loss_ += -log(prob) * weight;
     } else {
-      loss_ += -log(1.0 - prob);
+      loss_ += -log(1.0 - prob) * weight;
     }
     nexamples_ += 1;
 
-    real alpha = lr * (real(label) - prob);
+    real alpha = weight * lr * (real(label) - prob);
 
     // update first
     first_output_grad_.zero();
@@ -142,4 +143,5 @@ namespace fasttext {
       return t_sigmoid[i];
     }
   }
+
 }

@@ -22,6 +22,19 @@
 
 // warning: non thread-safe
 namespace fasttext {
+
+  /**
+   *
+   *     first     second
+   *       |         |
+   *     average   average
+   *       |         |
+   *     output    output
+   *       |         |
+   *       --sigmoid--
+   *
+   *
+   */
   class PairModel {
   private:
     std::shared_ptr<Matrix> first_embedding_;
@@ -83,18 +96,12 @@ namespace fasttext {
     void update(const std::vector<int32_t>& first_input,
                 const std::vector<int32_t>& second_input,
                 const bool label,
-                real lr);
+                real lr,
+                real weight = 1.0);
 
     real getLoss() { return loss_ / nexamples_; }
 
     std::minstd_rand rng;
-  };
-
-
-  class PairModelTrainer {
-  private:
-  public:
-    
   };
 }
 #endif //FASTTEXT_PAIRMODEL_H

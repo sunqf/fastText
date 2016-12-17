@@ -44,6 +44,8 @@ class Vector {
 
 std::ostream& operator<<(std::ostream&, const Vector&);
 real dot(const Vector& first, const Vector& second);
+
+real xMy(const Vector& x, const Matrix& m, const Vector& y);
 }
 
 #endif

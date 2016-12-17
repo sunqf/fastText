@@ -9,16 +9,18 @@
 
 CXX = c++
 CXXFLAGS = -pthread -std=c++0x
-OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o
+OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
 opt: fasttext
 opt: pairtext
+opt: interplate
 
 debug: CXXFLAGS += -g -O0 -fno-inline
 debug: fasttext
 debug: pairtext
+debug: interplate
 
 args.o: src/args.cc src/args.h
 	$(CXX) $(CXXFLAGS) -c src/args.cc
@@ -53,5 +55,12 @@ pairtext.o: src/pairtext.cc src/*.h
 pairtext: $(OBJS) src/pairtext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/pairmain.cc -o pairtext
 
+interplatemodel.o: src/InterplateModel.cc src/InterplateModel.h src/args.h
+	$(CXX) $(CXXFLAGS) -c src/InterplateModel.cc
+interplatetext.o: src/InterplateText.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/InterplateText.cc
+interplate: $(OBJS) src/InterplateText.cc
+	$(CXX) $(CXXFLAGS) $(OBJS) src/InterplateMain.cc -o interplate
+
 clean:
-	rm -rf *.o fasttext pairtext
+	rm -rf *.o fasttext pairtext interplate

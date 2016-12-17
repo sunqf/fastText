@@ -128,4 +128,20 @@ real dot(const Vector& first, const Vector& second) {
   }
   return dist;
 }
+
+real xMy(const Vector& x, const Matrix& m, const Vector& y) {
+  assert(x.m_ == m.m_);
+  assert(m.n_ == y.m_);
+  real dist = 0.0;
+  Vector xm(y.m_);
+  xm.zero();
+  xm.mul(x, m);
+
+  for (int64_t i = 0; i < x.m_; i++) {
+    for (int64_t j = 0; j < y.m_; j++) {
+      dist = x[i] * m.data_[i * m.n_ + j] * y[j];
+    }
+  }
+  return dot(xm, y);
+}
 }
