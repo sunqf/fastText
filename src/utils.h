@@ -22,6 +22,16 @@ namespace utils {
   void seek(std::ifstream&, int64_t);
 
   std::vector<std::string> split(std::string line, char delim);
+
+
+  class Maths {
+  private:
+    void initSigmoid();
+    void initLog();
+  public:
+    Maths();
+
+  };
 }
 
 }

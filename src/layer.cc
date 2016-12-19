@@ -2,7 +2,7 @@
 // Created by sunqf on 2016/12/17.
 //
 
-#include "Layer.h"
+#include "layer.h"
 
 namespace fasttext {
 
@@ -70,7 +70,7 @@ real Similarity::update(const Vector &first, const Vector &second,
 Interplate::Interplate(std::shared_ptr<Matrix> matrix): matrix_(matrix) {}
 
 real Interplate::compute(const Vector &first, const Vector &second) const {
-  return xMy(first, *matrix_, second);
+  return sigmoid(xMy(first, *matrix_, second));
 }
 
 real Interplate::update(const Vector &first, const Vector &second,

@@ -86,6 +86,23 @@ namespace fasttext {
      */
   }
 
+  void PairModel::update(const std::vector<int32_t>& input,
+                         std::shared_ptr<Matrix> embedding,
+                         const Vector& hidden1,
+                         Vector& hidden1_grad,
+                         std::shared_ptr<Matrix> w1,
+                         const Vector& output,
+                         const Vector& output_grad) {
+    hidden1_grad.zero();
+    hidden1_grad.mul(output_grad, *w1);
+    w1->addMatrix(output_grad, hidden1);
+
+    hidden1_grad.mul(1.0 / input.size());
+    for (auto it = input.cbegin(); it != input.cend(); ++it) {
+      embedding->addRow(hidden1_grad, *it, 1.0);
+    }
+  }
+
   void PairModel::update(const std::vector<int32_t>& first_input,
                          const std::vector<int32_t>& second_input,
                          const bool label,
@@ -100,6 +117,7 @@ namespace fasttext {
     }
 
     computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
+
     for (auto i = 0; i < first_hidden1_.size(); i++) {
       if (uniform(rng) > args_->dropout) {
         first_dropout1_[i] = 1.0;
@@ -118,6 +136,7 @@ namespace fasttext {
       }
     }
     computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
+
     for (auto i = 0; i < second_hidden1_.size(); i++) {
       if (uniform(rng) > args_->dropout) {
         second_dropout1_[i] = 1.0;
@@ -141,18 +160,22 @@ namespace fasttext {
     // update first
     first_output_grad_.zero();
     first_output_grad_.addVec(second_output_, alpha);
+
     update(first_dropout_input_,
            first_embedding_, first_hidden1_, first_hidden1_grad_,
            first_dropout1_, first_dropout1_output_, first_dropout1_grad_,
            first_w1_, first_output_, first_output_grad_);
 
+
     // update second
     second_output_grad_.zero();
     second_output_grad_.addVec(first_output_, alpha);
+
     update(second_dropout_input_,
            second_embedding_, second_hidden1_, second_hidden1_grad_,
            second_dropout1_, second_dropout1_output_, second_dropout1_grad_,
            second_w1_, second_output_, second_output_grad_);
+
   }
 
 
