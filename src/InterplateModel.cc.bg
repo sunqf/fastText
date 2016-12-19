@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "InterplateModel.h"
+#include "interplatemodel.h"
 #include <assert.h>
 #include "matrix.h"
 #include "args.h"

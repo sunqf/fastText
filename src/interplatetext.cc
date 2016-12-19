@@ -2,7 +2,7 @@
 // Created by sunqf on 2016/12/15.
 //
 
-#include "InterplateText.h"
+#include "interplatetext.h"
 #include <fenv.h>
 #include <math.h>
 
@@ -17,7 +17,7 @@
 #include "utils.h"
 namespace fasttext {
 
-void InterplateText::getVector(std::shared_ptr <Dictionary> dict,
+void interplatetext::getVector(std::shared_ptr <Dictionary> dict,
                          std::shared_ptr <Matrix> embedding,
                          Vector &vec,
                          const std::string &word) {
@@ -31,15 +31,15 @@ void InterplateText::getVector(std::shared_ptr <Dictionary> dict,
   }
 }
 
-void InterplateText::getFirstVector(Vector &vec, const std::string &word) {
+void interplatetext::getFirstVector(Vector &vec, const std::string &word) {
   getVector(first_dict_, first_embedding_, vec, word);
 }
 
-void InterplateText::getSecondVector(Vector &vec, const std::string &word) {
+void interplatetext::getSecondVector(Vector &vec, const std::string &word) {
   getVector(second_dict_, second_embedding_, vec, word);
 }
 
-void InterplateText::saveVectors(std::shared_ptr <Dictionary> dict,
+void interplatetext::saveVectors(std::shared_ptr <Dictionary> dict,
                            std::shared_ptr <Matrix> embedding,
                            std::ofstream &ofs) {
   ofs << dict->nwords() << " " << args_->dim << std::endl;
@@ -51,7 +51,7 @@ void InterplateText::saveVectors(std::shared_ptr <Dictionary> dict,
   }
 }
 
-void InterplateText::saveVectors() {
+void interplatetext::saveVectors() {
   std::ofstream ofs(args_->output + ".vec");
   if (!ofs.is_open()) {
     std::cout << "Error opening file for saving vectors." << std::endl;
@@ -67,7 +67,7 @@ void InterplateText::saveVectors() {
   ofs.close();
 }
 
-void InterplateText::saveModel() {
+void interplatetext::saveModel() {
   std::ofstream ofs(args_->output + ".bin", std::ofstream::binary);
   if (!ofs.is_open()) {
     std::cerr << "Model file cannot be opened for saving!" << std::endl;
@@ -83,7 +83,7 @@ void InterplateText::saveModel() {
   ofs.close();
 }
 
-void InterplateText::loadModel(const std::string &filename) {
+void interplatetext::loadModel(const std::string &filename) {
   std::ifstream ifs(filename, std::ifstream::binary);
   if (!ifs.is_open()) {
     std::cerr << "Model file cannot be opened for loading!" << std::endl;
@@ -93,7 +93,7 @@ void InterplateText::loadModel(const std::string &filename) {
   ifs.close();
 }
 
-void InterplateText::loadModel(std::istream &in) {
+void interplatetext::loadModel(std::istream &in) {
   args_ = std::make_shared<Args>();
   first_dict_ = std::make_shared<Dictionary>(args_);
   first_embedding_ = std::make_shared<Matrix>();
@@ -113,7 +113,7 @@ void InterplateText::loadModel(std::istream &in) {
 
 }
 
-void InterplateText::printInfo(real progress, real loss) {
+void interplatetext::printInfo(real progress, real loss) {
   real t = real(clock() - start) / CLOCKS_PER_SEC;
   real wst = real(tokenCount) / t;
   real lr = args_->lr * (1.0 - progress);
@@ -129,7 +129,7 @@ void InterplateText::printInfo(real progress, real loss) {
   std::cout << std::flush;
 }
 
-void InterplateText::supervised(InterplateModel &model, real lr,
+void interplatetext::supervised(InterplateModel &model, real lr,
                           const std::vector <int32_t> &first,
                           const std::vector <int32_t> &second,
                           const bool label) {
@@ -138,7 +138,7 @@ void InterplateText::supervised(InterplateModel &model, real lr,
   model.update(first, second, label, lr);
 }
 
-void InterplateText::test(std::istream &in) {
+void interplatetext::test(std::istream &in) {
   int32_t nexamples = 0;
   int32_t nTrue = 0; // TT + TF
   double nTT = 0; // TT
@@ -175,7 +175,7 @@ void InterplateText::test(std::istream &in) {
   std::cout << "Number of examples: " << nexamples << std::endl;
 }
 
-real InterplateText::predictProbability(std::istream &in) const {
+real interplatetext::predictProbability(std::istream &in) const {
   int32_t label;
   std::vector <int32_t> first_words;
   std::vector <int32_t> second_words;
@@ -193,7 +193,7 @@ real InterplateText::predictProbability(std::istream &in) const {
   return model_->predict(first_words, second_words);
 }
 
-void InterplateText::predict(std::istream &in) {
+void interplatetext::predict(std::istream &in) {
   std::vector <std::pair<real, std::string>> predictions;
   while (in.peek() != EOF) {
     real prob = predictProbability(in);
@@ -202,7 +202,7 @@ void InterplateText::predict(std::istream &in) {
   }
 }
 
-void InterplateText::wordFirstVectors() {
+void interplatetext::wordFirstVectors() {
   std::string word;
   Vector vec(args_->dim);
   while (std::cin >> word) {
@@ -211,7 +211,7 @@ void InterplateText::wordFirstVectors() {
   }
 }
 
-void InterplateText::textFirstVectors() {
+void interplatetext::textFirstVectors() {
   std::vector <int32_t> line, labels;
   Vector vec(args_->dim);
   while (std::cin.peek() != EOF) {
@@ -228,7 +228,7 @@ void InterplateText::textFirstVectors() {
   }
 }
 
-void InterplateText::wordSecondVectors() {
+void interplatetext::wordSecondVectors() {
   std::string word;
   Vector vec(args_->dim);
   while (std::cin >> word) {
@@ -237,7 +237,7 @@ void InterplateText::wordSecondVectors() {
   }
 }
 
-void InterplateText::textSecondVectors() {
+void interplatetext::textSecondVectors() {
   std::vector <int32_t> line, labels;
   Vector vec(args_->dim);
   while (std::cin.peek() != EOF) {
@@ -254,7 +254,7 @@ void InterplateText::textSecondVectors() {
   }
 }
 
-void InterplateText::printVectors() {
+void interplatetext::printVectors() {
   if (args_->model == model_name::sup) {
     textFirstVectors();
     textSecondVectors();
@@ -265,7 +265,7 @@ void InterplateText::printVectors() {
 }
 
 
-void InterplateText::trainThread(int32_t threadId) {
+void interplatetext::trainThread(int32_t threadId) {
   std::ifstream ifs(args_->input + ".label");
   utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
 
@@ -315,7 +315,7 @@ void InterplateText::trainThread(int32_t threadId) {
   ifs.close();
 }
 
-void InterplateText::loadVectors(std::string filename,
+void interplatetext::loadVectors(std::string filename,
                            std::shared_ptr <Dictionary> dict,
                            std::shared_ptr <Matrix> embedding) {
   std::ifstream in(filename);
@@ -357,7 +357,7 @@ void InterplateText::loadVectors(std::string filename,
   }
 }
 
-void InterplateText::train(std::shared_ptr <Args> args) {
+void interplatetext::train(std::shared_ptr <Args> args) {
   args_ = args;
   first_dict_ = std::make_shared<Dictionary>(args_);
   second_dict_ = std::make_shared<Dictionary>(args_);

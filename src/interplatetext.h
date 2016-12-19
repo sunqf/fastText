@@ -13,14 +13,14 @@
 #include "matrix.h"
 #include "vector.h"
 #include "dictionary.h"
-#include "InterplateModel.h"
+#include "interplatemodel.h"
 #include "model.h"
 #include "utils.h"
 #include "real.h"
 #include "args.h"
 
 namespace fasttext {
-class InterplateText {
+class interplatetext {
 private:
   std::shared_ptr<Args> args_;
   std::shared_ptr<Dictionary> first_dict_;

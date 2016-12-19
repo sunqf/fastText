@@ -55,12 +55,12 @@ pairtext.o: src/pairtext.cc src/*.h
 pairtext: $(OBJS) src/pairtext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/pairmain.cc -o pairtext
 
-interplatemodel.o: src/InterplateModel.cc src/InterplateModel.h src/args.h
-	$(CXX) $(CXXFLAGS) -c src/InterplateModel.cc
-interplatetext.o: src/InterplateText.cc src/*.h
-	$(CXX) $(CXXFLAGS) -c src/InterplateText.cc
-interplate: $(OBJS) src/InterplateText.cc
-	$(CXX) $(CXXFLAGS) $(OBJS) src/InterplateMain.cc -o interplate
+interplatemodel.o: src/interplatemodel.cc src/interplatemodel.h src/args.h
+	$(CXX) $(CXXFLAGS) -c src/interplatemodel.cc
+interplatetext.o: src/interplatetext.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/interplatetext.cc
+interplate: $(OBJS) src/interplatetext.cc
+	$(CXX) $(CXXFLAGS) $(OBJS) src/interplatemain.cc -o interplate
 
 clean:
 	rm -rf *.o fasttext pairtext interplate

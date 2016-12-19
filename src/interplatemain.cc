@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "InterplateText.h"
+#include "interplatetext.h"
 #include "args.h"
 
 using namespace fasttext;
@@ -56,7 +56,7 @@ void test(int argc, char** argv) {
     printTestUsage();
     exit(EXIT_FAILURE);
   }
-  InterplateText interplateText;
+  interplatetext interplateText;
   interplateText.loadModel(std::string(argv[2]));
   std::string infile(argv[3]);
   if (infile == "-") {
@@ -84,7 +84,7 @@ void predict(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   bool print_prob = std::string(argv[1]) == "predict-prob";
-  InterplateText interplateText;
+  interplatetext interplateText;
   interplateText.loadModel(std::string(argv[2]));
 
   std::string infile(argv[3]);
@@ -108,7 +108,7 @@ void printVectors(int argc, char** argv) {
     printPrintVectorsUsage();
     exit(EXIT_FAILURE);
   }
-  InterplateText interplateText;
+  interplatetext interplateText;
   interplateText.loadModel(std::string(argv[2]));
   interplateText.printVectors();
   exit(0);
@@ -117,7 +117,7 @@ void printVectors(int argc, char** argv) {
 void train(int argc, char** argv) {
   std::shared_ptr<Args> a = std::make_shared<Args>();
   a->parseArgs(argc, argv);
-  InterplateText interplateText;
+  interplatetext interplateText;
   interplateText.train(a);
 }
 
