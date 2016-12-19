@@ -45,21 +45,12 @@ void Vector::mul(real a) {
   }
 }
 
-void Vector::addRow(const Matrix& A, int64_t i) {
+void Vector::addRow(const Matrix& A, int64_t i, real alpha) {
   assert(i >= 0);
   assert(i < A.m_);
   assert(m_ == A.n_);
   for (int64_t j = 0; j < A.n_; j++) {
-    data_[j] += A.data_[i * A.n_ + j];
-  }
-}
-
-void Vector::addRow(const Matrix& A, int64_t i, real a) {
-  assert(i >= 0);
-  assert(i < A.m_);
-  assert(m_ == A.n_);
-  for (int64_t j = 0; j < A.n_; j++) {
-    data_[j] += a * A.data_[i * A.n_ + j];
+    data_[j] += alpha * A.data_[i * A.n_ + j];
   }
 }
 
@@ -69,29 +60,50 @@ void Vector::addVec(const Vector& vec, real a) {
     data_[i] += a * vec.data_[i];
   }
 }
-void Vector::mul(const Matrix& A, const Vector& vec) {
+void Vector::mul(const Matrix& A, const Vector& vec, real alpha) {
   assert(A.m_ == m_);
   assert(A.n_ == vec.m_);
   for (int64_t i = 0; i < m_; i++) {
     data_[i] = 0.0;
     for (int64_t j = 0; j < A.n_; j++) {
-      data_[i] += A.data_[i * A.n_ + j] * vec.data_[j];
+      data_[i] += alpha * A.data_[i * A.n_ + j] * vec.data_[j];
     }
   }
 }
 
 
-void Vector::mul(const Vector& vec, const Matrix& A) {
+
+void Vector::mul(const Vector& vec, const Matrix& A, real alpha) {
   assert(vec.m_ == A.m_);
   assert(m_ == A.n_);
   for (int64_t j = 0; j < m_; j++) {
     data_[j] = 0.0;
     for (int64_t i = 0; i < vec.m_; i++) {
-      data_[j] += vec[i] * A.data_[i * A.n_ + j];
+      data_[j] += alpha * vec[i] * A.data_[i * A.n_ + j];
     }
   }
 }
 
+void Vector::mul(const Matrix& A, const Vector& vec, const Vector& dropout, real alpha) {
+  assert(A.m_ == m_);
+  assert(A.n_ == vec.m_);
+  assert(vec.m_ == dropout.m_);
+
+  for (int64_t i = 0; i < m_; i++) {
+    data_[i] = 0.0;
+    for (int64_t j = 0; j < A.n_; j++) {
+      data_[i] += alpha * A.data_[i * A.n_ + j] * vec.data_[j] * dropout[j];
+    }
+  }
+}
+
+void Vector::mul(const Vector& first, const Vector& second) {
+  assert(m_ == first.m_);
+  assert(m_ == second.m_);
+  for (auto i = 0; i < m_; i++) {
+    data_[i] = first.data_[i] * second.data_[i];
+  }
+}
 int64_t Vector::argmax() {
   real max = data_[0];
   int64_t argmax = 0;
@@ -133,15 +145,11 @@ real xMy(const Vector& x, const Matrix& m, const Vector& y) {
   assert(x.m_ == m.m_);
   assert(m.n_ == y.m_);
   real dist = 0.0;
-  Vector xm(y.m_);
-  xm.zero();
-  xm.mul(x, m);
-
   for (int64_t i = 0; i < x.m_; i++) {
     for (int64_t j = 0; j < y.m_; j++) {
-      dist = x[i] * m.data_[i * m.n_ + j] * y[j];
+      dist += x[i] * m.data_[i * m.n_ + j] * y[j];
     }
   }
-  return dot(xm, y);
+  return dist;
 }
 }

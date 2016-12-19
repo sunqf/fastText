@@ -34,11 +34,12 @@ class Vector {
     int64_t size() const;
     void zero();
     void mul(real);
-    void addRow(const Matrix&, int64_t);
-    void addRow(const Matrix&, int64_t, real);
-    void addVec(const Vector&, real);
-    void mul(const Matrix&, const Vector&);
-    void mul(const Vector& vec, const Matrix& A);
+    void addRow(const Matrix&, int64_t, real alpha = 1.0);
+    void addVec(const Vector&, real alpha = 1.0);
+    void mul(const Matrix&, const Vector&, real alpha = 1.0);
+    void mul(const Vector& vec, const Matrix& A, real alpha = 1.0);
+    void mul(const Matrix&, const Vector&, const Vector&, real alpha = 1.0);
+    void mul(const Vector&, const Vector&);
     int64_t argmax();
 };
 

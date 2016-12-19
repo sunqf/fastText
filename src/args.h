@@ -40,6 +40,7 @@ class Args {
     int minn;
     int maxn;
     int thread;
+    float dropout;
     double t;
     std::string label;
     int verbose;

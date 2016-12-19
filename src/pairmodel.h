@@ -19,6 +19,7 @@
 #define SIGMOID_TABLE_SIZE 512
 #define MAX_SIGMOID 8
 #define LOG_TABLE_SIZE 512
+#define MAX_INPUT_SIZE 2048
 
 // warning: non thread-safe
 namespace fasttext {
@@ -35,6 +36,7 @@ namespace fasttext {
    *
    *
    */
+
   class PairModel {
   private:
     std::shared_ptr<Matrix> first_embedding_;
@@ -42,16 +44,27 @@ namespace fasttext {
     std::shared_ptr<Matrix> second_embedding_;
     std::shared_ptr<Matrix> second_w1_;
 
+    std::vector<int32_t> first_dropout_input_;
     Vector first_hidden1_;
     Vector first_hidden1_grad_;
+    Vector first_dropout1_;
+    Vector first_dropout1_output_;
+    Vector first_dropout1_grad_;
     Vector first_output_;
     Vector first_output_grad_;
 
+    std::vector<int32_t > second_dropout_input_;
     Vector second_hidden1_;
     Vector second_hidden1_grad_;
+
+    Vector second_dropout1_;
+    Vector second_dropout1_output_;
+    Vector second_dropout1_grad_;
     Vector second_output_;
     Vector second_output_grad_;
     std::shared_ptr<Args> args_;
+
+    std::uniform_real_distribution<> uniform;
 
     int32_t isz_;
     int32_t hsz_;
@@ -89,6 +102,9 @@ namespace fasttext {
                 std::shared_ptr<Matrix> embedding,
                 const Vector& hidden1,
                 Vector& hidden1_grad,
+                const Vector& dropout1,
+                const Vector& dropout1_output,
+                Vector& dropout1_grad,
                 std::shared_ptr<Matrix> w1,
                 const Vector& output,
                 const Vector& output_grad);

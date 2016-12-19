@@ -31,6 +31,7 @@ Args::Args() {
   minn = 3;
   maxn = 6;
   thread = 12;
+  dropout = 1.0;
   lrUpdateRate = 100;
   t = 1e-4;
   label = "__label__";
