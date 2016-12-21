@@ -16,11 +16,9 @@ namespace fasttext {
                        std::shared_ptr<Args> args, int32_t seed)
       : first_dropout_input_(2048),
         first_hidden1_(args->dim), first_hidden1_grad_(args->dim),
-        first_dropout1_(args->dim), first_dropout1_output_(args->dim), first_dropout1_grad_(args->dim),
         first_output_(args->dim), first_output_grad_(args->dim),
         second_dropout_input_(2048),
         second_hidden1_(args->dim), second_hidden1_grad_(args->dim),
-        second_dropout1_(args->dim), second_dropout1_output_(args->dim), second_dropout1_grad_(args->dim),
         second_output_(args->dim), second_output_grad_(args->dim),
         uniform(0, 1), rng(seed) {
     first_embedding_ = first_embedding;
@@ -64,32 +62,6 @@ namespace fasttext {
                          std::shared_ptr<Matrix> embedding,
                          const Vector& hidden1,
                          Vector& hidden1_grad,
-                         const Vector& dropout1,
-                         const Vector& dropout1_output,
-                         Vector& dropout1_grad,
-                         std::shared_ptr<Matrix> w1,
-                         const Vector& output,
-                         const Vector& output_grad) {
-    dropout1_grad.zero();
-    dropout1_grad.mul(output_grad, *w1);
-    w1->addMatrix(output_grad, dropout1_output);
-
-    hidden1_grad.mul(dropout1_grad, dropout1);
-
-    hidden1_grad.mul(1.0 / input.size());
-    for (auto it = input.cbegin(); it != input.cend(); ++it) {
-      embedding->addRow(hidden1_grad, *it, 1.0);
-    }
-    /*
-    std::cout << "hidden1: " << hidden1 << std::endl;
-    std::cout << "hidden1_grad: " << hidden1_grad << std::endl;
-     */
-  }
-
-  void PairModel::update(const std::vector<int32_t>& input,
-                         std::shared_ptr<Matrix> embedding,
-                         const Vector& hidden1,
-                         Vector& hidden1_grad,
                          std::shared_ptr<Matrix> w1,
                          const Vector& output,
                          const Vector& output_grad) {
@@ -118,16 +90,7 @@ namespace fasttext {
 
     computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
 
-    for (auto i = 0; i < first_hidden1_.size(); i++) {
-      if (uniform(rng) > args_->dropout) {
-        first_dropout1_[i] = 1.0;
-      } else {
-        first_dropout1_[i] = 0.0;
-      }
-    }
-
-    first_dropout1_output_.mul(first_hidden1_, first_dropout1_);
-    first_output_.mul(*first_w1_, first_dropout1_output_);
+    first_output_.mul(*first_w1_, first_hidden1_);
 
     second_dropout_input_.resize(0);
     for (auto i = 0; i < second_input.size(); i++) {
@@ -137,15 +100,7 @@ namespace fasttext {
     }
     computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
 
-    for (auto i = 0; i < second_hidden1_.size(); i++) {
-      if (uniform(rng) > args_->dropout) {
-        second_dropout1_[i] = 1.0;
-      } else {
-        second_dropout1_[i] = 0.0;
-      }
-    }
-    second_dropout1_output_.mul(second_hidden1_, second_dropout1_);
-    second_output_.mul(*second_w1_, second_dropout1_output_);
+    second_output_.mul(*second_w1_, second_hidden1_);
 
     real prob = sigmoid(dot(first_output_, second_output_));
     if (label) {
@@ -163,7 +118,6 @@ namespace fasttext {
 
     update(first_dropout_input_,
            first_embedding_, first_hidden1_, first_hidden1_grad_,
-           first_dropout1_, first_dropout1_output_, first_dropout1_grad_,
            first_w1_, first_output_, first_output_grad_);
 
 
@@ -173,7 +127,6 @@ namespace fasttext {
 
     update(second_dropout_input_,
            second_embedding_, second_hidden1_, second_hidden1_grad_,
-           second_dropout1_, second_dropout1_output_, second_dropout1_grad_,
            second_w1_, second_output_, second_output_grad_);
 
   }

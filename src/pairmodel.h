@@ -47,19 +47,12 @@ namespace fasttext {
     std::vector<int32_t> first_dropout_input_;
     Vector first_hidden1_;
     Vector first_hidden1_grad_;
-    Vector first_dropout1_;
-    Vector first_dropout1_output_;
-    Vector first_dropout1_grad_;
     Vector first_output_;
     Vector first_output_grad_;
 
     std::vector<int32_t > second_dropout_input_;
     Vector second_hidden1_;
     Vector second_hidden1_grad_;
-
-    Vector second_dropout1_;
-    Vector second_dropout1_output_;
-    Vector second_dropout1_grad_;
     Vector second_output_;
     Vector second_output_grad_;
     std::shared_ptr<Args> args_;
@@ -102,20 +95,10 @@ namespace fasttext {
                 std::shared_ptr<Matrix> embedding,
                 const Vector& hidden1,
                 Vector& hidden1_grad,
-                const Vector& dropout1,
-                const Vector& dropout1_output,
-                Vector& dropout1_grad,
                 std::shared_ptr<Matrix> w1,
                 const Vector& output,
                 const Vector& output_grad);
 
-    void update(const std::vector<int32_t>& input,
-                std::shared_ptr<Matrix> embedding,
-                const Vector& hidden1,
-                Vector& hidden1_grad,
-                std::shared_ptr<Matrix> w1,
-                const Vector& output,
-                const Vector& output_grad);
     void update(const std::vector<int32_t>& first_input,
                 const std::vector<int32_t>& second_input,
                 const bool label,
