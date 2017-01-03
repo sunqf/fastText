@@ -42,6 +42,11 @@ private:
   void saveVectors(std::shared_ptr<Dictionary>,
                    std::shared_ptr<Matrix>,
                    std::ofstream&);
+  /**
+   *
+   * @return 如果转换成功返回true, 否则返回false
+   */
+  bool convertLabel(const std::string&, bool&, real&);
 public:
   void getFirstVector(Vector&, const std::string&);
   void getSecondVector(Vector&, const std::string&);
@@ -54,7 +59,8 @@ public:
   void supervised(InterplateModel&, real,
                   const std::vector<int32_t>&,
                   const std::vector<int32_t>&,
-                  const bool label);
+                  const bool label,
+                  real weight);
 
   void test(std::istream&);
   void predict(std::istream&);

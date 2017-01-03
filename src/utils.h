@@ -21,9 +21,9 @@ namespace utils {
   int64_t size(std::ifstream&);
   void seek(std::ifstream&, int64_t);
 
-  std::vector<std::string> split(std::string line, char delim);
+  std::vector<std::string> split(const std::string& line, char delim);
 
-
+  std::string replace(const std::string &line, char old_char, char new_char);
   class Maths {
   private:
     void initSigmoid();

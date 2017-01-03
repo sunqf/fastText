@@ -133,10 +133,11 @@ namespace fasttext {
   void PairText::supervised(PairModel& model, real lr,
                             const std::vector<int32_t>& first,
                             const std::vector<int32_t>& second,
-                            const bool label) {
+                            const bool label,
+                            real weight) {
     if (first.size() == 0 || second.size() == 0) return;
 
-    model.update(first, second, label, lr);
+    model.update(first, second, label, lr, weight);
   }
 
   void PairText::test(std::istream& in) {
@@ -150,15 +151,14 @@ namespace fasttext {
     while (in.peek() != EOF) {
       std::string line;
       getline(in, line);
-      std::vector<std::string> items = utils::split(line, '\t');
-      bool label = true;
-      if (items[0] == "0") label = false;
-      first_dict_->getLine(items[1], first_line, model_->rng);
-      first_dict_->addNgrams(first_line, args_->wordNgrams);
+      first_dict_->getWords(line, first_line, args_->wordNgrams, model_->rng);
+      getline(in, line);
+      second_dict_->getWords(line, second_line, args_->wordNgrams, model_->rng);
 
-      second_dict_->getLine(items[2], second_line, model_->rng);
-      second_dict_->addNgrams(second_line, args_-> wordNgrams);
-      if (first_line.size() > 0 && second_line.size() > 0) {
+      getline(in, line);
+      bool label;
+      real weight = 1.0;
+      if (convertLabel(line, label, weight) && first_line.size() > 0 && second_line.size() > 0) {
         real prob = model_->predict(first_line, second_line);
         if (label == true) {
           nTrue++;
@@ -183,13 +183,9 @@ namespace fasttext {
 
     std::string line;
     getline(in, line);
-    std::vector<std::string> items = utils::split(line, '\t');
-
-    first_dict_->getLine(items[1], first_words, model_->rng);
-    first_dict_->addNgrams(first_words, args_->wordNgrams);
-
-    second_dict_->getLine(items[2], second_words, model_->rng);
-    second_dict_->addNgrams(second_words, args_->wordNgrams);
+    first_dict_->getWords(line, first_words, args_->wordNgrams, model_->rng);
+    getline(in, line);
+    second_dict_->getWords(line, second_words, args_->wordNgrams, model_->rng);
     if (first_words.empty() || second_words.empty()) return 0.0;
     return model_->predict(first_words, second_words);
   }
@@ -265,13 +261,30 @@ namespace fasttext {
     }
   }
 
-
+  bool PairText::convertLabel(const std::string &text, bool &label, real &weight) {
+    if (text == "ACCEPT") {
+      label = true;
+      weight = 1.0;
+      return true;
+    } else if (text == "REFUSE") {
+      label = false;
+      weight = 1.0;
+      return true;
+    } else if (text == "ACCEPT_INTERVIEW") {
+      label = true;
+      weight = 2.0;
+    }
+    return false;
+  }
   void PairText::trainThread(int32_t threadId) {
     std::ifstream ifs(args_->input + ".label");
     utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
 
+    // 去掉第一个不完整的样本
     std::string line;
-    getline(ifs, line);
+    while (getline(ifs, line)) {
+      if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
+    }
     std::cout << line << std::endl;
     PairModel model(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, threadId);
 
@@ -279,27 +292,36 @@ namespace fasttext {
     int64_t localTokenCount = 0;
     std::vector<int32_t> first_words, second_words;
     bool label;
+    real weight = 1.0;
     while (tokenCount < args_->epoch * ntokens) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
       if (ifs.eof()) {
         ifs.clear();
         ifs.seekg(threadId * utils::size(ifs) / args_->thread);
-        getline(ifs, line);
+        while (getline(ifs, line)) {
+          if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
+        }
       }
+      //getline(ifs, line);
+      //if (line.length() == 0) continue;
+      //std::vector<std::string> items = utils::split(line, '\t');
+
+      //if (items[0] == "0") label = false;
+      //else if(items[0] == "1") label = true;
+
+      //getline(ifs, line);
       getline(ifs, line);
-      if (line.length() == 0) continue;
-      std::vector<std::string> items = utils::split(line, '\t');
+      localTokenCount += first_dict_->getWords(line, first_words, args_->wordNgrams, model.rng);
+      getline(ifs, line);
+      localTokenCount += second_dict_->getWords(line, second_words, args_->wordNgrams, model.rng);
 
-      if (items[0] == "0") label = false;
-      else if(items[0] == "1") label = true;
+      getline(ifs, line);
+      if (!convertLabel(line, label, weight)) continue;
 
-      localTokenCount += first_dict_->getLine(items[1], first_words, model.rng);
-      localTokenCount += second_dict_->getLine(items[2], second_words, model.rng);
-
-      first_dict_->addNgrams(first_words, args_->wordNgrams);
-      second_dict_->addNgrams(second_words, args_->wordNgrams);
-      supervised(model, lr, first_words, second_words, label);
+      //first_dict_->addNgrams(first_words, args_->wordNgrams);
+      //second_dict_->addNgrams(second_words, args_->wordNgrams);
+      supervised(model, lr, first_words, second_words, label, weight);
 
       if (localTokenCount > args_->lrUpdateRate) {
         tokenCount += localTokenCount;
@@ -367,20 +389,20 @@ namespace fasttext {
       std::cerr << "Cannot use stdin for training!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::ifstream first_fs(args_->input + ".first");
+    std::ifstream first_fs(args_->input);
     if (!first_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    first_dict_->readFromFile(first_fs);
+    first_dict_->readFromFile(first_fs, 0, 3);
     first_fs.close();
 
-    std::ifstream second_fs(args_->input + ".second");
+    std::ifstream second_fs(args_->input);
     if (!second_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    second_dict_->readFromFile(second_fs);
+    second_dict_->readFromFile(second_fs, 1, 3);
     second_fs.close();
 
     first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);

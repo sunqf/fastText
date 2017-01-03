@@ -2,6 +2,7 @@
 // Created by sunqf on 2016/12/17.
 //
 
+#include <cmath>
 #include "layer.h"
 
 namespace fasttext {
@@ -93,6 +94,29 @@ real Interplate::update(const Vector &first, const Vector &second,
   secondGrad.mul(first, *matrix_, alpha);
 
   matrix_->add(first, second, alpha);
+}
+
+
+real Consine::compute(const Vector &first, const Vector &second) const {
+ return dot(first, second) / sqrt(dot(first, first) * dot(second, second));
+}
+real Consine::update(const Vector &first, const Vector &second,
+                     bool label, real weight, real lr,
+                     Vector &firstGrad, Vector &secondGrad) {
+  real square1 = dot(first, first);
+  real square2 = dot(second, second);
+
+
+  // x2 / (len(x1) * len(x2)) - x1 / (square(x1) * square(x2) * len(x1))
+  firstGrad.zero();
+  firstGrad.addVec(second, 1 / sqrt(square1 * square2));
+  firstGrad.addVec(first, 1 / (square1 * square2 * sqrt(square1)));
+
+  // x1 / (len(x1) * len(x2)) - x2 / (square(x1) * square(x2) * len(x2))
+  secondGrad.zero();
+  secondGrad.addVec(first, 1 / sqrt(square1 * square2));
+  secondGrad.addVec(second, 1 / (square1 * square2 * sqrt(square2)));
+
 }
 }
 

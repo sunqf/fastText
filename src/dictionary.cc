@@ -18,6 +18,8 @@
 #include <cctype>
 #include <sstream>
 
+#include "Utils.h"
+
 namespace fasttext {
 
 const std::string Dictionary::EOS = "</s>";
@@ -172,18 +174,22 @@ bool Dictionary::readWord(std::istream& in, std::string& word) const
   return !word.empty();
 }
 
-void Dictionary::readFromFile(std::istream& in) {
+void Dictionary::readFromFile(std::istream& in, int index, int batch) {
   std::string word;
   int64_t minThreshold = 1;
+  int64_t numLine = 0;
   while (readWord(in, word)) {
-    add(word);
-    if (ntokens_ % 1000000 == 0 && args_->verbose > 1) {
-      std::cout << "\rRead " << ntokens_  / 1000000 << "M words" << std::flush;
+    if (numLine % batch == index) {
+      add(word);
+      if (ntokens_ % 1000000 == 0 && args_->verbose > 1) {
+        std::cout << "\rRead " << ntokens_ / 1000000 << "M words" << std::flush;
+      }
+      if (size_ > 0.75 * MAX_VOCAB_SIZE) {
+        minThreshold++;
+        threshold(minThreshold, minThreshold);
+      }
     }
-    if (size_ > 0.75 * MAX_VOCAB_SIZE) {
-      minThreshold++;
-      threshold(minThreshold, minThreshold);
-    }
+    numLine++;
   }
   threshold(args_->minCount, args_->minCountLabel);
   initTableDiscard();
@@ -298,6 +304,22 @@ int32_t Dictionary::getLine(std::string &line,
       words.push_back(wid);
     }
     if (words.size() > MAX_LINE_SIZE && args_->model != model_name::sup) break;
+  }
+  return ntokens;
+}
+
+int32_t Dictionary::getWords(std::string &line,
+                             std::vector<int32_t>& words,
+                             int ngram,
+                            std::minstd_rand& rng) const {
+  words.clear();
+  std::vector<std::string> items = utils::split(line, '\t');
+  std::vector<int32_t> temp;
+  int32_t ntokens = 0;
+  for (auto it = items.begin(); it != items.end(); ++it) {
+    ntokens += getLine(*it, temp, rng);
+    addNgrams(temp, ngram);
+    words.insert(words.end(), temp.begin(), temp.end());
   }
   return ntokens;
 }

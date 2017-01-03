@@ -65,6 +65,7 @@ void InterplateModel::update(const std::vector <int32_t> &first_line,
       second_dropout_input_.push_back(second_line[i]);
     }
   }
+  if (first_dropout_input_.size() == 0 || second_dropout_input_.size() == 0) return;
   computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
   computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
   real prob = sigmoid(xMy(first_hidden1_, *interplate_, second_hidden1_));

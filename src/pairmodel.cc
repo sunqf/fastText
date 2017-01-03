@@ -58,6 +58,23 @@ namespace fasttext {
     return sigmoid(dot(first_output_, second_output_));
   }
 
+/*
+  real PairModel::predict(const std::vector<int32_t>& first,
+                          const std::vector<int32_t>& second) {
+    computeHidden(first_embedding_, first, first_hidden1_);
+    first_output_.mul(*first_w1_, first_hidden1_);
+
+    computeHidden(second_embedding_, second, second_hidden1_);
+    second_output_.mul(*second_w1_, second_hidden1_);
+
+    real dot12 = dot(first_output_, second_output_);
+    real dot11 = dot(first_output_, first_output_);
+    real dot22 = dot(second_output_, second_output_);
+    real cosine = dot12 / sqrt(dot11 * dot22);
+    return cosine;
+  }
+*/
+
   void PairModel::update(const std::vector<int32_t>& input,
                          std::shared_ptr<Matrix> embedding,
                          const Vector& hidden1,
@@ -75,22 +92,18 @@ namespace fasttext {
     }
   }
 
+
   void PairModel::update(const std::vector<int32_t>& first_input,
                          const std::vector<int32_t>& second_input,
                          const bool label,
                          real lr,
                          real weight) {
     first_dropout_input_.resize(0);
-
     for (auto i = 0; i < first_input.size(); i++) {
       if (uniform(rng) > args_->dropout) {
         first_dropout_input_.push_back(first_input[i]);
       }
     }
-
-    computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
-
-    first_output_.mul(*first_w1_, first_hidden1_);
 
     second_dropout_input_.resize(0);
     for (auto i = 0; i < second_input.size(); i++) {
@@ -98,8 +111,12 @@ namespace fasttext {
         second_dropout_input_.push_back(second_input[i]);
       }
     }
-    computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
 
+    if (first_dropout_input_.size() == 0 || second_dropout_input_.size() == 0) return;
+
+    computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
+    computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
+    first_output_.mul(*first_w1_, first_hidden1_);
     second_output_.mul(*second_w1_, second_hidden1_);
 
     real prob = sigmoid(dot(first_output_, second_output_));
@@ -131,6 +148,67 @@ namespace fasttext {
 
   }
 
+/*
+  void PairModel::update(const std::vector<int32_t> &first_input,
+                         const std::vector<int32_t> &second_input,
+                         const bool label, real lr, real weight) {
+    first_dropout_input_.resize(0);
+    for (auto i = 0; i < first_input.size(); i++) {
+      if (uniform(rng) > args_->dropout) {
+        first_dropout_input_.push_back(first_input[i]);
+      }
+    }
+
+    second_dropout_input_.resize(0);
+    for (auto i = 0; i < second_input.size(); i++) {
+      if (uniform(rng) > args_->dropout) {
+        second_dropout_input_.push_back(second_input[i]);
+      }
+    }
+
+    if (first_dropout_input_.size() == 0 || second_dropout_input_.size() == 0) return;
+
+    computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
+    computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
+    first_output_.mul(*first_w1_, first_hidden1_);
+    second_output_.mul(*second_w1_, second_hidden1_);
+
+    real dot12 = dot(first_output_, second_output_);
+    real dot11 = dot(first_output_, first_output_);
+    real dot22 = dot(second_output_, second_output_);
+    real cosine = dot12 / sqrt(dot11 * dot22);
+    int flag = label ? 1 : -1;
+
+    nexamples_ += 1;
+    loss_ +=  (1 - flag * cosine) * weight;
+    real alpha = weight * lr * -flag;
+
+    real len1 = sqrt(dot11);
+    real len2 = sqrt(dot22);
+
+
+    // x2 / (len(x1) * len(x2)) - x1 * dot(x1, x2) / (square(x1) * square(x2) * len(x1))
+    first_output_grad_.zero();
+    first_output_grad_.addVec(second_output_, 1 / (len1 * len2));
+    first_output_grad_.addVec(first_output_, -1 * dot12 / (dot11 * dot22 * len1));
+    first_output_grad_.mul(alpha);
+
+    // x1 / (len(x1) * len(x2)) - x2 * dot(x1, x2) / (square(x1) * square(x2) * len(x2))
+    second_output_grad_.zero();
+    second_output_grad_.addVec(first_output_, 1 / (len1 * len2));
+    second_output_grad_.addVec(second_output_, -1 * dot12 / (dot11 * dot22 * len2));
+    second_output_grad_.mul(alpha);
+
+    update(first_dropout_input_,
+           first_embedding_, first_hidden1_, first_hidden1_grad_,
+           first_w1_, first_output_, first_output_grad_);
+
+
+    update(second_dropout_input_,
+           second_embedding_, second_hidden1_, second_hidden1_grad_,
+           second_w1_, second_output_, second_output_grad_);
+  }
+  */
 
   void PairModel::initSigmoid() {
     t_sigmoid = new real[SIGMOID_TABLE_SIZE + 1];

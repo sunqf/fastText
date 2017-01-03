@@ -57,5 +57,13 @@ public:
               real lr,
               Vector& firstGrad, Vector& secondGrad);
 };
+
+class Consine {
+public:
+  real compute(const Vector& first, const Vector& second) const;
+  real update(const Vector& first, const Vector& second,
+              bool label, real weight, real lr,
+              Vector& firstGrad, Vector& secondGrad);
+};
 }
 #endif //FASTTEXT_LAYER_H

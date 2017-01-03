@@ -82,6 +82,11 @@ void Args::parseArgs(int argc, char** argv) {
       minCount = atoi(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-minCountLabel") == 0) {
       minCountLabel = atoi(argv[ai + 1]);
+    } else if (strcmp(argv[ai], "-dropout") == 0) {
+      dropout = atoi(argv[ai + 1]);
+      if (dropout < 0.0 || dropout > 0.5) {
+        printf("dropout should be in [0.0, 0.5]");
+      }
     } else if (strcmp(argv[ai], "-neg") == 0) {
       neg = atoi(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-wordNgrams") == 0) {

@@ -335,7 +335,7 @@ void FastText::train(std::shared_ptr<Args> args) {
     std::cerr << "Input file cannot be opened!" << std::endl;
     exit(EXIT_FAILURE);
   }
-  dict_->readFromFile(ifs);
+  dict_->readFromFile(ifs, 0, 1);
   ifs.close();
 
   if (args_->pretrainedVectors.size() != 0) {

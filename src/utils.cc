@@ -27,7 +27,7 @@ namespace utils {
     ifs.seekg(std::streampos(pos));
   }
 
-  std::vector<std::string> split(std::string line, char delim) {
+  std::vector<std::string> split(const std::string& line, char delim) {
     unsigned long start = 0;
     unsigned long end = 0;
     std::vector<std::string> items;
@@ -38,6 +38,16 @@ namespace utils {
       start = end;
     }
     return items;
+  }
+
+  std::string replace(const std::string& line, char old_char, char new_char) {
+    std::string new_str = line;
+    for (auto i = 0; i < new_str.length(); i++) {
+      if (new_str[i] == old_char) {
+        new_str[i] = new_char;
+      }
+    }
+    return new_str;
   }
 }
 
