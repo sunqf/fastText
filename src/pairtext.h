@@ -71,6 +71,7 @@ public:
   void test(std::istream&);
   void predict(std::istream&);
   real predictProbability(std::istream&) const;
+  real predictProbability(std::string& first, std::string& second) const;
   void wordFirstVectors();
   void textFirstVectors();
   void wordSecondVectors();

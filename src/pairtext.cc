@@ -149,24 +149,35 @@ namespace fasttext {
     std::vector<int32_t> second_line;
 
     while (in.peek() != EOF) {
-      std::string line;
-      getline(in, line);
-      first_dict_->getWords(line, first_line, args_->wordNgrams, model_->rng);
-      getline(in, line);
-      second_dict_->getWords(line, second_line, args_->wordNgrams, model_->rng);
+      std::string first, second, step;
+      getline(in, first);
+      first_dict_->getWords(first, first_line, args_->wordNgrams, model_->rng);
+      getline(in, second);
+      second_dict_->getWords(second, second_line, args_->wordNgrams, model_->rng);
 
-      getline(in, line);
+      getline(in, step);
       bool label;
       real weight = 1.0;
-      if (convertLabel(line, label, weight) && first_line.size() > 0 && second_line.size() > 0) {
+      if (convertLabel(step, label, weight) && first_line.size() > 0 && second_line.size() > 0) {
         real prob = model_->predict(first_line, second_line);
         if (label == true) {
           nTrue++;
           if (prob > 0.5) {
             precision += 1.0;
             nTT++;
+          } else {
+            std::cout << first << std::endl;
+            std::cout << second << std::endl;
+            std::cout << step << std::endl;
+            std::cout << prob << std::endl; 
           }
         } else if (prob < 0.5 && label == false) precision += 1.0;
+	else {
+          std::cout << first << std::endl;
+          std::cout << second << std::endl;
+          std::cout << step << std::endl;
+          std::cout << prob << std::endl; 
+	}
         nexamples++;
       }
     }
@@ -186,6 +197,15 @@ namespace fasttext {
     first_dict_->getWords(line, first_words, args_->wordNgrams, model_->rng);
     getline(in, line);
     second_dict_->getWords(line, second_words, args_->wordNgrams, model_->rng);
+    if (first_words.empty() || second_words.empty()) return 0.0;
+    return model_->predict(first_words, second_words);
+  }
+
+  real PairText::predictProbability(std::string& first, std::string& second) const {
+    std::vector<int32_t> first_words;
+    std::vector<int32_t> second_words;
+    first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
+    second_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
     if (first_words.empty() || second_words.empty()) return 0.0;
     return model_->predict(first_words, second_words);
   }
@@ -262,7 +282,7 @@ namespace fasttext {
   }
 
   bool PairText::convertLabel(const std::string &text, bool &label, real &weight) {
-    if (text == "ACCEPT") {
+    if (text == "INTERVIEW") {
       label = true;
       weight = 1.0;
       return true;
@@ -277,12 +297,13 @@ namespace fasttext {
     return false;
   }
   void PairText::trainThread(int32_t threadId) {
-    std::ifstream ifs(args_->input + ".label");
+    std::ifstream ifs(args_->input);
     utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
 
     // 去掉第一个不完整的样本
     std::string line;
     while (getline(ifs, line)) {
+      std::cout << line << std::endl;
       if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
     }
     std::cout << line << std::endl;

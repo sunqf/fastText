@@ -277,7 +277,7 @@ bool interplatetext::convertLabel(const std::string &text, bool &label, real &we
 }
 
 void interplatetext::trainThread(int32_t threadId) {
-  std::ifstream ifs(args_->input + ".label");
+  std::ifstream ifs(args_->input);
   utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
 
   std::string line;
@@ -378,7 +378,7 @@ void interplatetext::train(std::shared_ptr <Args> args) {
     std::cerr << "Cannot use stdin for training!" << std::endl;
     exit(EXIT_FAILURE);
   }
-  std::ifstream first_fs(args_->input + ".first");
+  std::ifstream first_fs(args_->input);
   if (!first_fs.is_open()) {
     std::cerr << "Input file cannot be opened!" << std::endl;
     exit(EXIT_FAILURE);
@@ -386,7 +386,7 @@ void interplatetext::train(std::shared_ptr <Args> args) {
   first_dict_->readFromFile(first_fs, 0, 3);
   first_fs.close();
 
-  std::ifstream second_fs(args_->input + ".second");
+  std::ifstream second_fs(args_->input);
   if (!second_fs.is_open()) {
     std::cerr << "Input file cannot be opened!" << std::endl;
     exit(EXIT_FAILURE);

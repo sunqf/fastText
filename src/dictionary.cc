@@ -18,7 +18,7 @@
 #include <cctype>
 #include <sstream>
 
-#include "Utils.h"
+#include "utils.h"
 
 namespace fasttext {
 
