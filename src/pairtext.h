@@ -71,7 +71,7 @@ public:
   void test(std::istream&);
   void predict(std::istream&);
   real predictProbability(std::istream&) const;
-  real predictProbability(std::string& first, std::string& second) const;
+  real predictProbability(const std::string& first, const std::string& second) const;
   void wordFirstVectors();
   void textFirstVectors();
   void wordSecondVectors();
@@ -80,6 +80,8 @@ public:
   void trainThread(int32_t);
   void train(std::shared_ptr<Args>);
 
+  real firstSimilarity(const std::string&, const std::string&) const;
+  real secondSimilarity(const std::string&, const std::string&) const;
   void loadVectors(std::string, std::shared_ptr<Dictionary>, std::shared_ptr<Matrix>);
 };
 }

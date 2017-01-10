@@ -199,7 +199,7 @@ namespace fasttext {
     return model_->predict(first_words, second_words);
   }
 
-  real PairText::predictProbability(std::string& first, std::string& second) const {
+  real PairText::predictProbability(const std::string& first, const std::string& second) const {
     std::vector<int32_t> first_words;
     std::vector<int32_t> second_words;
     first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
@@ -337,7 +337,7 @@ namespace fasttext {
       localTokenCount += second_dict_->getWords(line, second_words, args_->wordNgrams, model.rng);
 
       getline(ifs, line);
-      if (!convertLabel(line, label, weight) || first_words.size() < 10 && second_words.size() < 10) continue;
+      if (!convertLabel(line, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
 
       //first_dict_->addNgrams(first_words, args_->wordNgrams);
       //second_dict_->addNgrams(second_words, args_->wordNgrams);
@@ -398,6 +398,30 @@ namespace fasttext {
         embedding->data_[idx * dim + j] = mat->data_[i * dim + j];
       }
     }
+  }
+
+  real PairText::firstSimilarity(const std::string &first, const std::string &second) const {
+    if (first_dict_ == nullptr || second_dict_ == nullptr || model_ == nullptr ) {
+      std::cerr << "There are some problems in model" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    std::vector<int32_t> first_words, second_words;
+    first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
+    first_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
+
+    return model_->firstSimilarity(first_words, second_words);
+  }
+
+  real PairText::secondSimilarity(const std::string &first, const std::string &second) const {
+    if (first_dict_ == nullptr || second_dict_ == nullptr || model_ == nullptr) {
+      std::cerr << "There are some problems in model" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    std::vector<int32_t> first_words, second_words;
+    second_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
+    second_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
+
+    return model_->secondSimilarity(first_words, second_words);
   }
 
   void PairText::train(std::shared_ptr<Args> args) {

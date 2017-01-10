@@ -77,9 +77,14 @@ namespace fasttext {
     real sigmoid(real) const;
     real log(real) const;
 
-    void computeHidden(std::shared_ptr<Matrix> embedding,
-                       std::vector<int32_t> words,
-                       Vector& hidden);
+    void computeHidden(const std::shared_ptr<Matrix> embedding,
+                       const std::vector<int32_t>& words,
+                       Vector& hidden) const;
+
+    Vector getFirstOutput(const std::vector<int32_t>& words) const;
+    Vector getSecondOutput(const std::vector<int32_t>& words) const;
+
+    real similarity(Vector& first, Vector& second) const;
   public:
     PairModel(std::shared_ptr<Matrix> first_embedding,
               std::shared_ptr<Matrix> first_w1,
@@ -104,6 +109,13 @@ namespace fasttext {
                 const bool label,
                 real lr,
                 real weight = 1.0);
+
+
+    real firstSimilarity(const std::vector<int32_t>& first_words,
+                         const std::vector<int32_t>& second_words) const;
+
+    real secondSimilarity(const std::vector<int32_t>& first_words,
+                          const std::vector<int32_t>& second_words) const;
 
     real getLoss() { return loss_ / nexamples_; }
 

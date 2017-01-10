@@ -36,9 +36,9 @@ namespace fasttext {
   }
 
 
-  void PairModel::computeHidden(std::shared_ptr<Matrix> embedding,
-                                std::vector<int32_t> words,
-                                Vector &hidden) {
+  void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
+                                const std::vector<int32_t>& words,
+                                Vector& hidden) const {
     //assert(hidden.size() == hsz_);
     hidden.zero();
     for (auto it = words.cbegin(); it != words.cend(); ++it) {
@@ -148,6 +148,42 @@ namespace fasttext {
 
   }
 
+  Vector PairModel::getFirstOutput(const std::vector<int32_t>& words) const {
+    Vector hidden(args_->dim), output(args_->dim);
+    computeHidden(first_embedding_, words, hidden);
+    output.mul(*first_w1_, first_hidden1_);
+    return output;
+  }
+
+  Vector PairModel::getSecondOutput(const std::vector<int32_t>& words) const {
+    Vector hidden(args_->dim), output(args_->dim);
+    computeHidden(second_embedding_, words, hidden);
+    output.mul(*first_w1_, second_hidden1_);
+    return output;
+  }
+
+  real PairModel::similarity(Vector &first, Vector &second) const {
+    real dot12 = dot(first, second);
+    real dot11 = dot(first, first);
+    real dot22 = dot(second, second);
+    real ll = sqrtf(dot11 * dot22);
+    if (ll > 0.0) return dot12 / ll;
+    return 0.0;
+  }
+
+  real PairModel::firstSimilarity(const std::vector<int32_t> &first_words,
+                                  const std::vector<int32_t> &second_words) const {
+    Vector first_output = getFirstOutput(first_words);
+    Vector second_output = getSecondOutput(second_words);
+    return dot(first_output, second_output);
+  }
+
+  real PairModel::secondSimilarity(const std::vector<int32_t> &first_words,
+                                   const std::vector<int32_t> &second_words) const {
+    Vector first_output = getSecondOutput(first_words);
+    Vector second_output = getSecondOutput(second_words);
+    return dot(first_output, second_output);
+  }
 /*
   void PairModel::update(const std::vector<int32_t> &first_input,
                          const std::vector<int32_t> &second_input,
@@ -233,6 +269,9 @@ namespace fasttext {
     int i = int(x * LOG_TABLE_SIZE);
     return t_log[i];
   }
+
+
+
 
   real PairModel::sigmoid(real x) const {
     // x != x  check x is NaN

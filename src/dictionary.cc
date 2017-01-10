@@ -291,7 +291,7 @@ int32_t Dictionary::getLine(std::istream& in,
   return ntokens;
 }
 
-int32_t Dictionary::getLine(std::string &line,
+int32_t Dictionary::getLine(const std::string &line,
                             std::vector<int32_t>& words,
                             std::minstd_rand& rng) const {
   std::uniform_real_distribution<> uniform(0, 1);
@@ -313,7 +313,7 @@ int32_t Dictionary::getLine(std::string &line,
   return ntokens;
 }
 
-int32_t Dictionary::getWords(std::string &line,
+int32_t Dictionary::getWords(const std::string &line,
                              std::vector<int32_t>& words,
                              int ngram,
                              std::minstd_rand& rng) const {
