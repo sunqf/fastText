@@ -81,6 +81,8 @@ class Dictionary {
     int32_t getLine(std::string&, std::vector<int32_t>&, std::minstd_rand&) const;
     int32_t getWords(std::string&, std::vector<int32_t>&, int, std::minstd_rand&) const;
     void threshold(int64_t, int64_t);
+
+    void printWord();
 };
 
 }

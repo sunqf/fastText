@@ -8,7 +8,7 @@
 #
 
 CXX = c++
-CXXFLAGS = -pthread -std=c++0x
+CXXFLAGS = -pthread -std=c++0x -fPIC
 OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o interface.o
 INCLUDES = -I.
 
@@ -22,7 +22,7 @@ debug: fasttext
 debug: pairtext
 debug: interplate
 
-lib: CXXFLAGS += -g -O0 -fno-inline -fPIC
+lib: CXXFLAGS += -g -O0 -fno-inline 
 lib: fasttext.so
 
 args.o: src/args.cc src/args.h
@@ -58,7 +58,7 @@ pairmodel.o: src/pairmodel.cc src/pairmodel.h src/args.h
 pairtext.o: src/pairtext.cc src/*.h
 	$(CXX) $(CXXFLAGS) -c src/pairtext.cc
 
-pairtext: $(OBJS) src/pairtext.c
+pairtext: $(OBJS) src/pairtext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/pairmain.cc -o pairtext
 
 

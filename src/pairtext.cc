@@ -110,6 +110,10 @@ namespace fasttext {
     second_embedding_->load(in);
     second_w1_->load(in);
 
+    std::cout << "first" << std::endl;
+    first_dict_->printWord();
+    std::cout << "second" << std::endl;
+    second_dict_->printWord();
     model_ = std::make_shared<PairModel>(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, 0);
 
   }
@@ -158,27 +162,21 @@ namespace fasttext {
       getline(in, step);
       bool label;
       real weight = 1.0;
-      if (convertLabel(step, label, weight) && first_line.size() > 0 && second_line.size() > 0) {
+      if (convertLabel(step, label, weight) && first_line.size() > 10 && second_line.size() > 10) {
         real prob = model_->predict(first_line, second_line);
         if (label == true) {
           nTrue++;
-          if (prob > 0.5) {
+          if (prob >= 0.5) {
             precision += 1.0;
             nTT++;
-          } else {
-            std::cout << first << std::endl;
-            std::cout << second << std::endl;
-            std::cout << step << std::endl;
-            std::cout << prob << std::endl; 
           }
         } else if (prob < 0.5 && label == false) precision += 1.0;
-	else {
-          std::cout << first << std::endl;
-          std::cout << second << std::endl;
-          std::cout << step << std::endl;
-          std::cout << prob << std::endl; 
-	}
         nexamples++;
+
+        std::cout << first << std::endl;
+        std::cout << second << std::endl;
+        std::cout << step << std::endl;
+        std::cout << prob << std::endl; 
       }
     }
     std::cout << std::setprecision(3);
@@ -197,7 +195,7 @@ namespace fasttext {
     first_dict_->getWords(line, first_words, args_->wordNgrams, model_->rng);
     getline(in, line);
     second_dict_->getWords(line, second_words, args_->wordNgrams, model_->rng);
-    if (first_words.empty() || second_words.empty()) return 0.0;
+    if (first_words.size() > 10 || second_words.size() > 10) return 0.0;
     return model_->predict(first_words, second_words);
   }
 
@@ -292,7 +290,8 @@ namespace fasttext {
       return true;
     } else if (text == "ACCEPT_INTERVIEW") {
       label = true;
-      weight = 2.0;
+      weight = 1.0;
+      return true;
     }
     return false;
   }
@@ -338,7 +337,7 @@ namespace fasttext {
       localTokenCount += second_dict_->getWords(line, second_words, args_->wordNgrams, model.rng);
 
       getline(ifs, line);
-      if (!convertLabel(line, label, weight)) continue;
+      if (!convertLabel(line, label, weight) || first_words.size() < 10 && second_words.size() < 10) continue;
 
       //first_dict_->addNgrams(first_words, args_->wordNgrams);
       //second_dict_->addNgrams(second_words, args_->wordNgrams);

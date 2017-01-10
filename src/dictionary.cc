@@ -178,18 +178,23 @@ void Dictionary::readFromFile(std::istream& in, int index, int batch) {
   std::string word;
   int64_t minThreshold = 1;
   int64_t numLine = 0;
+  int64_t indexInLine = 0;
   while (readWord(in, word)) {
     if (numLine % batch == index) {
-      add(word);
-      if (ntokens_ % 1000000 == 0 && args_->verbose > 1) {
-        std::cout << "\rRead " << ntokens_ / 1000000 << "M words" << std::flush;
+      if (indexInLine > 0) {
+        add(word);
+        if (ntokens_ % 1000000 == 0 && args_->verbose > 1) {
+          std::cout << "\rRead " << ntokens_ / 1000000 << "M words" << std::flush;
+        }
+        if (size_ > 0.75 * MAX_VOCAB_SIZE) {
+          minThreshold++;
+          threshold(minThreshold, minThreshold);
+        }
       }
-      if (size_ > 0.75 * MAX_VOCAB_SIZE) {
-        minThreshold++;
-        threshold(minThreshold, minThreshold);
-      }
+      if (word == EOS) indexInLine = 0;
+      else indexInLine++;
     }
-    numLine++;
+    if (word == EOS) numLine++;
   }
   threshold(args_->minCount, args_->minCountLabel);
   initTableDiscard();
@@ -311,12 +316,12 @@ int32_t Dictionary::getLine(std::string &line,
 int32_t Dictionary::getWords(std::string &line,
                              std::vector<int32_t>& words,
                              int ngram,
-                            std::minstd_rand& rng) const {
+                             std::minstd_rand& rng) const {
   words.clear();
   std::vector<std::string> items = utils::split(line, '\t');
   std::vector<int32_t> temp;
   int32_t ntokens = 0;
-  for (auto it = items.begin(); it != items.end(); ++it) {
+  for (auto it = items.begin() + 1; it != items.end(); ++it) {
     ntokens += getLine(*it, temp, rng);
     addNgrams(temp, ngram);
     words.insert(words.end(), temp.begin(), temp.end());
@@ -369,4 +374,9 @@ void Dictionary::load(std::istream& in) {
   initNgrams();
 }
 
+void Dictionary::printWord() {
+  for (auto it = words_.begin(); it != words_.end(); ++it) {
+    std::cout << it->word << std:: endl;
+  }
+}
 }

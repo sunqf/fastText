@@ -235,7 +235,10 @@ namespace fasttext {
   }
 
   real PairModel::sigmoid(real x) const {
-    if (x < -MAX_SIGMOID) {
+    // x != x  check x is NaN
+    if (x != x) {
+      return 0.0;
+    } else if (x < -MAX_SIGMOID) {
       return 0.0;
     } else if (x > MAX_SIGMOID) {
       return 1.0;
