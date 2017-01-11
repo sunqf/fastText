@@ -514,7 +514,7 @@ namespace fasttext {
 
     start = clock();
     tokenCount = 0;
-    for (int32_t i = 0; i < args_->epoch; i++) {
+    for (int32_t epoch = 0; epoch < args_->epoch; epoch++) {
       // train
       std::vector<std::thread> threads;
       for (int32_t i = 0; i < args_->thread; i++) {
@@ -524,7 +524,7 @@ namespace fasttext {
         it->join();
       }
       // valid
-      std::cout << "epoch = " << i << "  valid loss = " << valid() << std::endl;
+      std::cout << "epoch = " << epoch << "  valid loss = " << valid() << std::endl;
 
       model_ = std::make_shared<PairModel>(first_embedding_,
                                            first_w1_,
