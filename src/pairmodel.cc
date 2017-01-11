@@ -48,14 +48,17 @@ namespace fasttext {
   }
 
   real PairModel::predict(const std::vector<int32_t>& first,
-                          const std::vector<int32_t>& second) {
-    computeHidden(first_embedding_, first, first_hidden1_);
-    first_output_.mul(*first_w1_, first_hidden1_);
+                          const std::vector<int32_t>& second) const {
+    Vector first_hidden1(args_->dim), second_hidden1(args_->dim);
+    computeHidden(first_embedding_, first, first_hidden1);
+    computeHidden(second_embedding_, second, second_hidden1);
 
-    computeHidden(second_embedding_, second, second_hidden1_);
-    second_output_.mul(*second_w1_, second_hidden1_);
+    Vector first_output(args_->dim), second_output(args_->dim);
 
-    return sigmoid(dot(first_output_, second_output_));
+    first_output.mul(*first_w1_, first_hidden1);
+    second_output.mul(*second_w1_, second_hidden1);
+
+    return sigmoid(dot(first_output, second_output));
   }
 
 /*
@@ -184,6 +187,16 @@ namespace fasttext {
     Vector second_output = getSecondOutput(second_words);
     return dot(first_output, second_output);
   }
+
+
+  real PairModel::loss(bool label, real prob, real weight) const {
+    if (label) {
+      return -log(prob) * weight;
+    } else {
+      return -log(1.0 - prob) * weight;
+    }
+  }
+
 /*
   void PairModel::update(const std::vector<int32_t> &first_input,
                          const std::vector<int32_t> &second_input,

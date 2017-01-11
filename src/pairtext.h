@@ -9,7 +9,7 @@
 
 #include <atomic>
 #include <memory>
-
+#include <future>
 #include "matrix.h"
 #include "vector.h"
 #include "dictionary.h"
@@ -52,7 +52,7 @@ private:
    *
    * @return 如果转换成功返回true, 否则返回false
    */
-  bool convertLabel(const std::string&, bool&, real&);
+  bool convertLabel(const std::string&, bool&, real&) const;
 public:
   void getFirstVector(Vector&, const std::string&);
   void getSecondVector(Vector&, const std::string&);
@@ -78,6 +78,8 @@ public:
   void textSecondVectors();
   void printVectors();
   void trainThread(int32_t);
+  void validFunc(int32_t, std::shared_ptr<real>) const;
+  real valid();
   void train(std::shared_ptr<Args>);
 
   real firstSimilarity(const std::string&, const std::string&) const;

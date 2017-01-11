@@ -94,7 +94,7 @@ namespace fasttext {
               int32_t seed);
 
     real predict(const std::vector<int32_t>& first,
-                 const std::vector<int32_t>& second);
+                 const std::vector<int32_t>& second) const;
 
     void update(const std::vector<int32_t>& input,
                 std::shared_ptr<Matrix> embedding,
@@ -118,6 +118,8 @@ namespace fasttext {
                           const std::vector<int32_t>& second_words) const;
 
     real getLoss() { return loss_ / nexamples_; }
+
+    real loss(bool label, real prob, real weight) const;
 
     std::minstd_rand rng;
   };

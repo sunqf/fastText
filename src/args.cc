@@ -64,8 +64,8 @@ void Args::parseArgs(int argc, char** argv) {
       exit(EXIT_FAILURE);
     } else if (strcmp(argv[ai], "-input") == 0) {
       input = std::string(argv[ai + 1]);
-    } else if (strcmp(argv[ai], "-test") == 0) {
-      test = std::string(argv[ai + 1]);
+    } else if (strcmp(argv[ai], "-valid") == 0) {
+      valid = std::string(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-output") == 0) {
       output = std::string(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-lr") == 0) {

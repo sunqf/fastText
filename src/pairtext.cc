@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <thread>
+#include <future>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -279,7 +280,7 @@ namespace fasttext {
     }
   }
 
-  bool PairText::convertLabel(const std::string &text, bool &label, real &weight) {
+  bool PairText::convertLabel(const std::string &text, bool &label, real &weight) const {
     if (text == "INTERVIEW") {
       label = true;
       weight = 1.0;
@@ -298,6 +299,7 @@ namespace fasttext {
   void PairText::trainThread(int32_t threadId) {
     std::ifstream ifs(args_->input);
     utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
+    int64_t endPos = std::min(utils::size(ifs), (threadId + 1) * utils::size(ifs) / args_->thread);
 
     // 去掉第一个不完整的样本
     std::string line;
@@ -314,24 +316,10 @@ namespace fasttext {
     std::vector<int32_t> first_words, second_words;
     bool label;
     real weight = 1.0;
-    while (tokenCount < args_->epoch * ntokens) {
+    while (ifs.tellg() < endPos) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
-      if (ifs.eof()) {
-        ifs.clear();
-        ifs.seekg(threadId * utils::size(ifs) / args_->thread);
-        while (getline(ifs, line)) {
-          if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
-        }
-      }
-      //getline(ifs, line);
-      //if (line.length() == 0) continue;
-      //std::vector<std::string> items = utils::split(line, '\t');
 
-      //if (items[0] == "0") label = false;
-      //else if(items[0] == "1") label = true;
-
-      //getline(ifs, line);
       getline(ifs, first);
       getline(ifs, second);
       getline(ifs, third);
@@ -427,6 +415,66 @@ namespace fasttext {
 
     return model_->secondSimilarity(first_words, second_words);
   }
+
+  void PairText::validFunc(int32_t threadId, std::shared_ptr<real> pLoss) const {
+    std::ifstream ifs(args_->valid);
+    utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
+    int64_t endPos = std::min(utils::size(ifs), (threadId + 1) * utils::size(ifs) / args_->thread);
+    // 去掉第一个不完整的样本
+    std::string line;
+    while (getline(ifs, line)) {
+      std::cout << line << std::endl;
+      if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
+    }
+    std::cout << line << std::endl;
+    PairModel model(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, threadId);
+
+    const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
+    real localLoss = 0.0;
+
+    std::string first, second, third;
+    std::vector<int32_t> first_words, second_words;
+    bool label;
+    real weight = 1.0;
+    while (ifs.tellg() < endPos) {
+      getline(ifs, first);
+      getline(ifs, second);
+      getline(ifs, third);
+      if (first.empty() || second.empty() || third.empty()) continue;
+      first_dict_->getWords(first, first_words, args_->wordNgrams, model.rng);
+
+      second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
+
+      if (!convertLabel(third, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
+
+      real prob = model.predict(first_words, second_words);
+
+      localLoss += model.loss(label, prob, weight);
+    }
+    *pLoss = localLoss;
+    ifs.close();
+  }
+
+  real PairText::valid() {
+    std::vector<std::thread> threads;
+    std::vector<std::shared_ptr<real>> losses;
+    real validLoss = 0.0;
+    threads.clear();
+    for (int32_t i = 0; i < args_->thread; i++) {
+      std::shared_ptr<real> pLoss = std::shared_ptr<real>(new real(0.0));
+      losses.push_back(pLoss);
+      //threads.push_back(std::thread(validFunc, i, std::move(lossPromise)));
+      threads.push_back(std::thread([=]() { validFunc(i, pLoss); }));
+    }
+    for (auto it = threads.begin(); it != threads.end(); ++it) {
+      it->join();
+    }
+    for (auto it = losses.begin(); it != losses.end(); ++it) {
+      validLoss += *(*it);
+    }
+    return validLoss;
+  }
+
   void PairText::train(std::shared_ptr<Args> args) {
     args_ = args;
     first_dict_ = std::make_shared<Dictionary>(args_);
@@ -466,23 +514,30 @@ namespace fasttext {
 
     start = clock();
     tokenCount = 0;
-    std::vector<std::thread> threads;
-    for (int32_t i = 0; i < args_->thread; i++) {
-      threads.push_back(std::thread([=]() { trainThread(i); }));
-    }
-    for (auto it = threads.begin(); it != threads.end(); ++it) {
-      it->join();
-    }
-    model_ = std::make_shared<PairModel>(first_embedding_,
-                                         first_w1_,
-                                         second_embedding_,
-                                         second_w1_,
-                                         args_, 0);
+    for (int32_t i = 0; i < args_->epoch; i++) {
+      // train
+      std::vector<std::thread> threads;
+      for (int32_t i = 0; i < args_->thread; i++) {
+        threads.push_back(std::thread([=]() { trainThread(i); }));
+      }
+      for (auto it = threads.begin(); it != threads.end(); ++it) {
+        it->join();
+      }
+      // valid
+      std::cout << "epoch = " << i << "  valid loss = " << valid() << std::endl;
 
-    saveModel();
-    if (args_->model != model_name::sup) {
-      saveVectors();
+      model_ = std::make_shared<PairModel>(first_embedding_,
+                                           first_w1_,
+                                           second_embedding_,
+                                           second_w1_,
+                                           args_, 0);
+
+      saveModel();
+      if (args_->model != model_name::sup) {
+        saveVectors();
+      }
     }
+
   }
 
 }
