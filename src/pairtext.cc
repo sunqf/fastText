@@ -310,6 +310,7 @@ namespace fasttext {
 
     const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
     int64_t localTokenCount = 0;
+    std::string first, second, third;
     std::vector<int32_t> first_words, second_words;
     bool label;
     real weight = 1.0;
@@ -331,13 +332,16 @@ namespace fasttext {
       //else if(items[0] == "1") label = true;
 
       //getline(ifs, line);
-      getline(ifs, line);
-      localTokenCount += first_dict_->getWords(line, first_words, args_->wordNgrams, model.rng);
-      getline(ifs, line);
-      localTokenCount += second_dict_->getWords(line, second_words, args_->wordNgrams, model.rng);
+      getline(ifs, first);
+      getline(ifs, second);
+      getline(ifs, third);
+      if (first.empty() || second.empty() || third.empty()) continue;
+      localTokenCount += first_dict_->getWords(first, first_words, args_->wordNgrams, model.rng);
 
-      getline(ifs, line);
-      if (!convertLabel(line, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
+      localTokenCount += second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
+
+
+      if (!convertLabel(third, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
 
       //first_dict_->addNgrams(first_words, args_->wordNgrams);
       //second_dict_->addNgrams(second_words, args_->wordNgrams);
@@ -423,7 +427,6 @@ namespace fasttext {
 
     return model_->secondSimilarity(first_words, second_words);
   }
-
   void PairText::train(std::shared_ptr<Args> args) {
     args_ = args;
     first_dict_ = std::make_shared<Dictionary>(args_);
