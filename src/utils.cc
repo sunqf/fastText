@@ -18,8 +18,11 @@ namespace fasttext {
 namespace utils {
 
   int64_t size(std::ifstream& ifs) {
+    int64_t curr = ifs.tellg();
     ifs.seekg(std::streamoff(0), std::ios::end);
-    return ifs.tellg();
+    int64_t size = ifs.tellg();
+    ifs.seekg(std::streamoff(curr));
+    return size;
   }
 
   void seek(std::ifstream& ifs, int64_t pos) {

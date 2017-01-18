@@ -123,6 +123,18 @@ void printVectors(int argc, char** argv) {
   exit(0);
 }
 
+/*
+void printEmbedding(int argc, char** argv) {
+  if (argc != 3) {
+    exit(EXIT_FAILURE);
+  }
+  PairText pairText;
+  pairText.loadModel(std::string(argv[2]));
+  pairText.printEmbedding();
+  exit(0);
+}
+*/
+
 void train(int argc, char** argv) {
   std::shared_ptr<Args> a = std::make_shared<Args>();
   a->parseArgs(argc, argv);
@@ -142,6 +154,8 @@ int main(int argc, char** argv) {
     test(argc, argv);
   } else if (command == "print-vectors") {
     printVectors(argc, argv);
+  } else if (command == "word-embedding") {
+    //printEmbedding(argc, argv);
   } else if (command == "predict" || command == "predict-prob" ) {
     predict(argc, argv);
   } else {

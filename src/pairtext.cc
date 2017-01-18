@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include "utils.h"
 
@@ -111,10 +112,6 @@ namespace fasttext {
     second_embedding_->load(in);
     second_w1_->load(in);
 
-    std::cout << "first" << std::endl;
-    first_dict_->printWord();
-    std::cout << "second" << std::endl;
-    second_dict_->printWord();
     model_ = std::make_shared<PairModel>(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, 0);
 
   }
@@ -173,11 +170,6 @@ namespace fasttext {
           }
         } else if (prob < 0.5 && label == false) precision += 1.0;
         nexamples++;
-
-        std::cout << first << std::endl;
-        std::cout << second << std::endl;
-        std::cout << step << std::endl;
-        std::cout << prob << std::endl; 
       }
     }
     std::cout << std::setprecision(3);
@@ -191,16 +183,17 @@ namespace fasttext {
     std::vector<int32_t> first_words;
     std::vector<int32_t> second_words;
 
-    std::string line;
-    getline(in, line);
-    first_dict_->getWords(line, first_words, args_->wordNgrams, model_->rng);
-    getline(in, line);
-    second_dict_->getWords(line, second_words, args_->wordNgrams, model_->rng);
+    std::string first_line, second_line;
+    getline(in, first_line);
+    getline(in, second_line);
+    first_dict_->getWords(first_line, first_words, args_->wordNgrams, model_->rng);
+    second_dict_->getWords(second_line, second_words, args_->wordNgrams, model_->rng);
     if (first_words.size() > 10 || second_words.size() > 10) return 0.0;
     return model_->predict(first_words, second_words);
   }
 
   real PairText::predictProbability(const std::string& first, const std::string& second) const {
+    if (first.length() == 0 || second.length() == 0) return 0.0;
     std::vector<int32_t> first_words;
     std::vector<int32_t> second_words;
     first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
@@ -304,10 +297,8 @@ namespace fasttext {
     // 去掉第一个不完整的样本
     std::string line;
     while (getline(ifs, line)) {
-      std::cout << line << std::endl;
       if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
     }
-    std::cout << line << std::endl;
     PairModel model(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, threadId);
 
     const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
@@ -316,7 +307,7 @@ namespace fasttext {
     std::vector<int32_t> first_words, second_words;
     bool label;
     real weight = 1.0;
-    while (ifs.tellg() < endPos) {
+    while (ifs.tellg() > 0 && ifs.tellg() < endPos) {
       real progress = real(tokenCount) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
 
@@ -342,10 +333,6 @@ namespace fasttext {
           printInfo(progress, model.getLoss());
         }
       }
-    }
-    if (threadId == 0 && args_->verbose > 0) {
-      printInfo(1.0, model.getLoss());
-      std::cout << std::endl;
     }
     ifs.close();
   }
@@ -416,17 +403,15 @@ namespace fasttext {
     return model_->secondSimilarity(first_words, second_words);
   }
 
-  void PairText::validFunc(int32_t threadId, std::shared_ptr<real> pLoss) const {
+  void PairText::validFunc(int32_t threadId, std::shared_ptr<real> pLoss, std::shared_ptr<int32_t> nexamples) const {
     std::ifstream ifs(args_->valid);
     utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
     int64_t endPos = std::min(utils::size(ifs), (threadId + 1) * utils::size(ifs) / args_->thread);
     // 去掉第一个不完整的样本
     std::string line;
     while (getline(ifs, line)) {
-      std::cout << line << std::endl;
       if (line == "REFUSE" || line == "INTERVIEW" || line == "ACCEPT_INTERVIEW") break;
     }
-    std::cout << line << std::endl;
     PairModel model(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, threadId);
 
     const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
@@ -436,7 +421,7 @@ namespace fasttext {
     std::vector<int32_t> first_words, second_words;
     bool label;
     real weight = 1.0;
-    while (ifs.tellg() < endPos) {
+    while (ifs.tellg() > 0 && ifs.tellg() < endPos) {
       getline(ifs, first);
       getline(ifs, second);
       getline(ifs, third);
@@ -450,6 +435,8 @@ namespace fasttext {
       real prob = model.predict(first_words, second_words);
 
       localLoss += model.loss(label, prob, weight);
+
+      (*nexamples)++;
     }
     *pLoss = localLoss;
     ifs.close();
@@ -458,21 +445,26 @@ namespace fasttext {
   real PairText::valid() {
     std::vector<std::thread> threads;
     std::vector<std::shared_ptr<real>> losses;
+    std::vector<std::shared_ptr<int32_t>> numbers;
     real validLoss = 0.0;
+    int32_t nexamples = 0;
     threads.clear();
     for (int32_t i = 0; i < args_->thread; i++) {
       std::shared_ptr<real> pLoss = std::shared_ptr<real>(new real(0.0));
+      std::shared_ptr<int32_t> pNum = std::shared_ptr<int32_t>(new int32_t(0));
       losses.push_back(pLoss);
+      numbers.push_back(pNum);
       //threads.push_back(std::thread(validFunc, i, std::move(lossPromise)));
-      threads.push_back(std::thread([=]() { validFunc(i, pLoss); }));
+      threads.push_back(std::thread([=]() { validFunc(i, pLoss, pNum); }));
     }
     for (auto it = threads.begin(); it != threads.end(); ++it) {
       it->join();
     }
-    for (auto it = losses.begin(); it != losses.end(); ++it) {
-      validLoss += *(*it);
+    for (int32_t i = 0; i < args_->thread; i++) {
+      validLoss += *(losses[i]);
+      nexamples += *(numbers[i]);
     }
-    return validLoss;
+    return validLoss / nexamples;
   }
 
   void PairText::train(std::shared_ptr<Args> args) {
@@ -514,6 +506,7 @@ namespace fasttext {
 
     start = clock();
     tokenCount = 0;
+    real minValidLoss = std::numeric_limits<real>::max();
     for (int32_t epoch = 0; epoch < args_->epoch; epoch++) {
       // train
       std::vector<std::thread> threads;
@@ -524,19 +517,23 @@ namespace fasttext {
         it->join();
       }
       // valid
-      std::cout << "epoch = " << epoch << "  valid loss = " << valid() << std::endl;
+      real validLoss = valid();
+      std::cout << "\nepoch = " << epoch << "  valid loss = " << validLoss << std::endl;
+      if (validLoss < minValidLoss) {
+        model_ = std::make_shared<PairModel>(first_embedding_,
+                                             first_w1_,
+                                             second_embedding_,
+                                             second_w1_,
+                                             args_, 0);
 
-      model_ = std::make_shared<PairModel>(first_embedding_,
-                                           first_w1_,
-                                           second_embedding_,
-                                           second_w1_,
-                                           args_, 0);
-
-      saveModel();
-      if (args_->model != model_name::sup) {
-        saveVectors();
+        saveModel();
+        if (args_->model != model_name::sup) {
+          saveVectors();
+        }
+        minValidLoss = std::min(minValidLoss, validLoss);
       }
     }
+
 
   }
 

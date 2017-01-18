@@ -28,6 +28,8 @@ class Vector {
     explicit Vector(int64_t);
     ~Vector();
 
+    Vector(const Vector& that) = delete;
+
     real& operator[](int64_t);
     const real& operator[](int64_t) const;
 

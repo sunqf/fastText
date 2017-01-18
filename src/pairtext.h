@@ -77,8 +77,9 @@ public:
   void wordSecondVectors();
   void textSecondVectors();
   void printVectors();
+  void printEmbedding();
   void trainThread(int32_t);
-  void validFunc(int32_t, std::shared_ptr<real>) const;
+  void validFunc(int32_t, std::shared_ptr<real>, std::shared_ptr<int32_t>) const;
   real valid();
   void train(std::shared_ptr<Args>);
 

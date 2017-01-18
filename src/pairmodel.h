@@ -81,8 +81,8 @@ namespace fasttext {
                        const std::vector<int32_t>& words,
                        Vector& hidden) const;
 
-    Vector getFirstOutput(const std::vector<int32_t>& words) const;
-    Vector getSecondOutput(const std::vector<int32_t>& words) const;
+    void getFirstOutput(const std::vector<int32_t>& words, Vector& output) const;
+    void getSecondOutput(const std::vector<int32_t>& words, Vector& output) const;
 
     real similarity(Vector& first, Vector& second) const;
   public:

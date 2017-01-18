@@ -49,6 +49,7 @@ namespace fasttext {
 
   real PairModel::predict(const std::vector<int32_t>& first,
                           const std::vector<int32_t>& second) const {
+    if (first.size() < 10 || second.size() < 10) return 0.0;
     Vector first_hidden1(args_->dim), second_hidden1(args_->dim);
     computeHidden(first_embedding_, first, first_hidden1);
     computeHidden(second_embedding_, second, second_hidden1);
@@ -115,7 +116,7 @@ namespace fasttext {
       }
     }
 
-    if (first_dropout_input_.size() == 0 || second_dropout_input_.size() == 0) return;
+    if (first_dropout_input_.size() < 5 || second_dropout_input_.size() < 5) return;
 
     computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
     computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
@@ -151,18 +152,16 @@ namespace fasttext {
 
   }
 
-  Vector PairModel::getFirstOutput(const std::vector<int32_t>& words) const {
-    Vector hidden(args_->dim), output(args_->dim);
+  void PairModel::getFirstOutput(const std::vector<int32_t>& words, Vector& output) const {
+    Vector hidden(args_->dim);
     computeHidden(first_embedding_, words, hidden);
-    output.mul(*first_w1_, first_hidden1_);
-    return output;
+    output.mul(*first_w1_, hidden);
   }
 
-  Vector PairModel::getSecondOutput(const std::vector<int32_t>& words) const {
-    Vector hidden(args_->dim), output(args_->dim);
+  void PairModel::getSecondOutput(const std::vector<int32_t>& words, Vector& output) const {
+    Vector hidden(args_->dim);
     computeHidden(second_embedding_, words, hidden);
-    output.mul(*first_w1_, second_hidden1_);
-    return output;
+    output.mul(*first_w1_, hidden);
   }
 
   real PairModel::similarity(Vector &first, Vector &second) const {
@@ -176,16 +175,18 @@ namespace fasttext {
 
   real PairModel::firstSimilarity(const std::vector<int32_t> &first_words,
                                   const std::vector<int32_t> &second_words) const {
-    Vector first_output = getFirstOutput(first_words);
-    Vector second_output = getSecondOutput(second_words);
-    return dot(first_output, second_output);
+    Vector first_output(args_->dim), second_output(args_->dim);
+    getFirstOutput(first_words, first_output);
+    getFirstOutput(second_words, second_output);
+    return similarity(first_output, second_output);
   }
 
   real PairModel::secondSimilarity(const std::vector<int32_t> &first_words,
                                    const std::vector<int32_t> &second_words) const {
-    Vector first_output = getSecondOutput(first_words);
-    Vector second_output = getSecondOutput(second_words);
-    return dot(first_output, second_output);
+    Vector first_output(args_->dim), second_output(args_->dim);
+    getSecondOutput(first_words, first_output);
+    getSecondOutput(second_words, second_output);
+    return similarity(first_output, second_output);
   }
 
 

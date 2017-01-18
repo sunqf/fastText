@@ -109,8 +109,12 @@ entry_type Dictionary::getType(int32_t id) const {
 
 std::string Dictionary::getWord(int32_t id) const {
   assert(id >= 0);
-  assert(id < size_);
-  return words_[id].word;
+  //assert(id < size_);
+  if (id < size_) {
+    return words_[id].word;
+  } else {
+    return "OOV";
+  }
 }
 
 uint32_t Dictionary::hash(const std::string& str) const {
@@ -321,8 +325,8 @@ int32_t Dictionary::getWords(const std::string &line,
   std::vector<std::string> items = utils::split(line, '\t');
   std::vector<int32_t> temp;
   int32_t ntokens = 0;
-  for (auto it = items.begin() + 1; it != items.end(); ++it) {
-    ntokens += getLine(*it, temp, rng);
+  for (int32_t i = 1; i < items.size(); i++) {
+    ntokens += getLine(items[i], temp, rng);
     addNgrams(temp, ngram);
     words.insert(words.end(), temp.begin(), temp.end());
   }
