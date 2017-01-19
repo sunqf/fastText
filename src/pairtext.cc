@@ -220,10 +220,9 @@ namespace fasttext {
     }
   }
 
-  void PairText::textFirstVectors() {
+  void PairText::textFirstVectors(Vector& vec) {
     std::vector<int32_t> line, labels;
-    Vector vec(args_->dim);
-    while (std::cin.peek() != EOF) {
+    if (std::cin.peek() != EOF) {
       first_dict_->getLine(std::cin, line, labels, model_->rng);
       first_dict_->addNgrams(line, args_->wordNgrams);
       vec.zero();
@@ -233,7 +232,6 @@ namespace fasttext {
       if (!line.empty()) {
         vec.mul(1.0 / line.size());
       }
-      std::cout << vec << std::endl;
     }
   }
 
@@ -246,10 +244,9 @@ namespace fasttext {
     }
   }
 
-  void PairText::textSecondVectors() {
+  void PairText::textSecondVectors(Vector& vec) {
     std::vector<int32_t> line, labels;
-    Vector vec(args_->dim);
-    while (std::cin.peek() != EOF) {
+    if (std::cin.peek() != EOF) {
       second_dict_->getLine(std::cin, line, labels, model_->rng);
       second_dict_->addNgrams(line, args_->wordNgrams);
       vec.zero();
@@ -259,14 +256,22 @@ namespace fasttext {
       if (!line.empty()) {
         vec.mul(1.0 / line.size());
       }
-      std::cout << vec << std::endl;
     }
   }
 
   void PairText::printVectors() {
     if (args_->model == model_name::sup) {
-      textFirstVectors();
-      textSecondVectors();
+      Vector first_hidden(args_->dim), second_hidden(args_->dim);
+      Vector first_output(args_->dim), second_output(args_->dim);
+      while (std::cin.peek() != EOF) {
+        textFirstVectors(first_hidden);
+        first_output.mul(*first_w1_, first_hidden);
+        textSecondVectors(second_hidden);
+        second_output.mul(*second_w1_, second_hidden);
+    	std::cout << first_hidden << std::endl << first_output << std::endl;
+        std::cout << second_hidden << std::endl << second_output << std::endl;
+        std::cout << dot(first_output, second_output) << " " << dot(first_output, first_output) << " " << dot(second_output, second_output) << std::endl;        
+      }
     } else {
       wordFirstVectors();
       wordSecondVectors();
@@ -483,6 +488,8 @@ namespace fasttext {
     first_dict_->build(first_fs);
     first_fs.close();
 
+    std::cout << "first dict " << first_dict_->nwords() << std::endl;
+
     std::ifstream second_fs(args_->dict + ".second");
     if (!second_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
@@ -490,6 +497,7 @@ namespace fasttext {
     }
     second_dict_->build(second_fs);
     second_fs.close();
+    std::cout << "second dict " << second_dict_->nwords() << std::endl;
 
     std::ifstream train_fs(args_->input);
     if (!train_fs.is_open()) {
@@ -497,14 +505,11 @@ namespace fasttext {
       exit(EXIT_FAILURE);
     }
 
+    numToken = 0;
     std::string first, second, label;
     std::vector<int32_t> first_words, second_words;
     std::minstd_rand rng(0);
-    while (!train_fs.eof()) {
-
-      getline(train_fs, first);
-      getline(train_fs, second);
-      getline(train_fs, label);
+    while (getline(train_fs, first) && getline(train_fs, second) && getline(train_fs, label)) {
       numToken += first_dict_->getLine(first, first_words, rng);
       numToken += second_dict_->getLine(second, second_words, rng);
     }
