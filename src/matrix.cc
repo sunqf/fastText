@@ -85,13 +85,6 @@ real Matrix::dotRow(const Vector& vec, int64_t i) {
   return d;
 }
 
-Vector Matrix::getRow(const int64_t i) {
-  Vector row(n_);
-  for (int64_t j = 0; j < n_; j++) {
-    row[j] = data_[i * n_ + j];
-  }
-  return row;
-}
 void Matrix::addMatrix(const Vector& left, const Vector& right) {
   assert(m_ == left.m_);
   assert(n_ == right.m_);
@@ -127,4 +120,16 @@ void Matrix::load(std::istream& in) {
   in.read((char*) data_, m_ * n_ * sizeof(real));
 }
 
+real dot(const Matrix& left, const Matrix& right) {
+  assert(left.m_ == right.m_);
+  assert(left.n_ == right.n_);
+
+  real d = 0.0;
+  for (int64_t i = 0; i < left.m_; i++) {
+    for (int64_t j = 0; j < left.n_; j++) {
+      d += left.data_[i * left.n_ + j] * right.data_[i * left.n_ + j];
+    }
+  }
+  return d;
+}
 }

@@ -476,20 +476,20 @@ namespace fasttext {
       std::cerr << "Cannot use stdin for training!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::ifstream first_fs(args_->input);
+    std::ifstream first_fs(args_->dict + ".first");
     if (!first_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    first_dict_->readFromFile(first_fs, 0, 3);
+    first_dict_->build(first_fs);
     first_fs.close();
 
-    std::ifstream second_fs(args_->input);
+    std::ifstream second_fs(args_->dict + ".second");
     if (!second_fs.is_open()) {
       std::cerr << "Input file cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    second_dict_->readFromFile(second_fs, 1, 3);
+    second_dict_->build(second_fs);
     second_fs.close();
 
     first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);

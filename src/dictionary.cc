@@ -378,6 +378,21 @@ void Dictionary::load(std::istream& in) {
   initNgrams();
 }
 
+
+void Dictionary::build(std::istream& in) {
+  words_.clear();
+  std::string word;
+  int32_t count;
+  while (in >> word >> count) {
+    entry e;
+    e.word = word;
+    e.count = count;
+    e.type = entry_type::word;
+    words_.push_back(e);
+  }
+  threshold(args_->minCount, args_->minCountLabel);
+}
+
 void Dictionary::printWord() {
   for (auto it = words_.begin(); it != words_.end(); ++it) {
     std::cout << it->word << std:: endl;

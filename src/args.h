@@ -23,6 +23,7 @@ class Args {
   public:
     Args();
     std::string input;
+    std::string dict;
     std::string valid;
     std::string output;
     double lr;

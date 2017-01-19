@@ -44,6 +44,7 @@ class Matrix {
     void load(std::istream&);
 };
 
+real dot(const Matrix& left, const Matrix& right);
 }
 
 #endif
