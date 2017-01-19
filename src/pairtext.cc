@@ -301,14 +301,13 @@ namespace fasttext {
     }
     PairModel model(first_embedding_, first_w1_, second_embedding_, second_w1_, args_, threadId);
 
-    const int64_t ntokens = first_dict_->ntokens() + second_dict_->ntokens();
     int64_t localTokenCount = 0;
     std::string first, second, third;
     std::vector<int32_t> first_words, second_words;
     bool label;
     real weight = 1.0;
     while (ifs.tellg() > 0 && ifs.tellg() < endPos) {
-      real progress = real(tokenCount) / (args_->epoch * ntokens);
+      real progress = real(tokenCount) / (args_->epoch * numToken);
       real lr = args_->lr * (1.0 - progress);
 
       getline(ifs, first);
@@ -490,6 +489,26 @@ namespace fasttext {
       exit(EXIT_FAILURE);
     }
     second_dict_->build(second_fs);
+    second_fs.close();
+
+    std::ifstream train_fs(args_->input);
+    if (!train_fs.is_open()) {
+      std::cerr << "Input file cannot be opened!" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    std::string first, second, label;
+    std::vector<int32_t> first_words, second_words;
+    std::minstd_rand rng(0);
+    while (!train_fs.eof()) {
+
+      getline(train_fs, first);
+      getline(train_fs, second);
+      getline(train_fs, label);
+      numToken += first_dict_->getLine(first, first_words, rng);
+      numToken += second_dict_->getLine(second, second_words, rng);
+    }
+    std::cout << "Total number of token: " << numToken << std::endl;
     second_fs.close();
 
     first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);

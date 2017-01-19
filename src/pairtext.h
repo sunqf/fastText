@@ -37,6 +37,7 @@ private:
 
   std::shared_ptr<PairModel> model_;
   std::atomic<int64_t> tokenCount;
+  std::atomic<int64_t> numToken;
   clock_t start;
 
 private:

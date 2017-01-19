@@ -124,7 +124,7 @@ namespace fasttext {
     second_output_.mul(*second_w1_, second_hidden1_);
 
     real prob = sigmoid(dot(first_output_, second_output_));
-    
+
     if (label) {
       loss_ += -log(prob) * weight;
     } else {
