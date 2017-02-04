@@ -9,17 +9,19 @@
 
 CXX = c++
 CXXFLAGS = -pthread -std=c++0x -fPIC
-OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o interface.o
+OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o interface.o alsmodel.o alstext.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
 opt: fasttext
 opt: pairtext
+opt: alstext
 opt: interplate
 
 debug: CXXFLAGS += -g -O0 -fno-inline
 debug: fasttext
 debug: pairtext
+debug: alstext
 debug: interplate
 
 lib: CXXFLAGS += -g -O0 -fno-inline 
@@ -61,6 +63,14 @@ pairtext.o: src/pairtext.cc src/*.h
 pairtext: $(OBJS) src/pairtext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/pairmain.cc -o pairtext
 
+alsmodel.o: src/alsmodel.cc src/alsmodel.h src/args.h
+	$(CXX) $(CXXFLAGS) -c src/alsmodel.cc
+
+alstext.o: src/alstext.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/alstext.cc
+
+alstext: $(OBJS) src/alstext.cc
+	$(CXX) $(CXXFLAGS) $(OBJS) src/alsmain.cc -o alstext
 
 interplatemodel.o: src/interplatemodel.cc src/interplatemodel.h src/args.h
 	$(CXX) $(CXXFLAGS) -c src/interplatemodel.cc
