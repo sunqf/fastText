@@ -95,6 +95,15 @@ void Matrix::addMatrix(const Vector& left, const Vector& right) {
   }
 }
 
+void Matrix::addMatrix(const Matrix& matrix, real alpha) {
+  assert(m_ == matrix.m_);
+  assert(n_ == matrix.n_);
+  for (int64_t i = 0; i < m_; i++) {
+    for (int64_t j = 0; j < n_; j++) {
+      data_[i * n_ + j] += matrix.data_[i * n_ + j] * alpha;
+    }
+  }
+}
 void Matrix::add(const Vector& x, const Vector& y, real alpha) {
   assert(m_ = x.m_);
   assert(n_ = y.m_);
@@ -132,4 +141,5 @@ real dot(const Matrix& left, const Matrix& right) {
   }
   return d;
 }
+
 }

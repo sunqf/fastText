@@ -14,6 +14,8 @@
 #include <ostream>
 #include <string>
 
+#include "real.h"
+
 namespace fasttext {
 
 enum class model_name : int {cbow=1, sg, sup};
@@ -26,7 +28,9 @@ class Args {
     std::string dict;
     std::string valid;
     std::string output;
-    double lr;
+    real lr;
+    real l1;
+    real l2;
     int lrUpdateRate;
     int dim;
     int ws;

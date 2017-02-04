@@ -89,6 +89,7 @@ namespace fasttext {
     hidden1_grad.zero();
     hidden1_grad.mul(output_grad, *w1);
     w1->addMatrix(output_grad, hidden1);
+    w1->addMatrix(*w1, -2 * args_->l2);
 
     hidden1_grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
@@ -130,6 +131,8 @@ namespace fasttext {
     } else {
       loss_ += -log(1.0 - prob) * weight;
     }
+
+    loss_ += args_->l2 * (dot(*first_w1_, *first_w1_) + dot(*second_w1_, *second_w1_)) * weight;
     nexamples_ += 1;
 
     real alpha = weight * lr * (real(label) - prob);
