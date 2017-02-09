@@ -45,13 +45,17 @@ namespace fasttext {
     std::shared_ptr<Matrix> second_w1_;
 
     std::vector<int32_t> first_dropout_input_;
-    Vector first_hidden1_;
+    //Vector first_hidden1_;
+    Vector first_hidden1_intput_;
+    Vector first_hidden1_output_;
     Vector first_hidden1_grad_;
     Vector first_output_;
     Vector first_output_grad_;
 
     std::vector<int32_t > second_dropout_input_;
-    Vector second_hidden1_;
+    //Vector second_hidden1_;
+    Vector second_hidden1_input_;
+    Vector second_hidden1_output_;
     Vector second_hidden1_grad_;
     Vector second_output_;
     Vector second_output_grad_;
@@ -80,11 +84,12 @@ namespace fasttext {
 
     void computeHidden(const std::shared_ptr<Matrix> embedding,
                        const std::vector<int32_t>& words,
-                       Vector& hidden) const;
+                       Vector& hidden_input,
+                       Vector& hidden_output) const;
 
     void updateHidden(std::shared_ptr<Matrix> embedding,
                       const std::vector<int32_t>& input,
-                      const Vector& hidden,
+                      const Vector& hidden_input,
                       Vector& hidden1_grad);
 
     void getFirstOutput(const std::vector<int32_t>& words, Vector& output) const;

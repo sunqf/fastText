@@ -15,10 +15,16 @@ namespace fasttext {
                        std::shared_ptr<Matrix> second_embedding, std::shared_ptr<Matrix> second_w1,
                        std::shared_ptr<Args> args, int32_t seed)
       : first_dropout_input_(2048),
-        first_hidden1_(args->dim), first_hidden1_grad_(args->dim),
+        //first_hidden1_(args->dim),
+        first_hidden1_intput_(args->dim),
+        first_hidden1_output_(args->dim),
+        first_hidden1_grad_(args->dim),
         first_output_(args->dim), first_output_grad_(args->dim),
         second_dropout_input_(2048),
-        second_hidden1_(args->dim), second_hidden1_grad_(args->dim),
+        //second_hidden1_(args->dim),
+        second_hidden1_input_(args->dim),
+        second_hidden1_output_(args->dim),
+        second_hidden1_grad_(args->dim),
         second_output_(args->dim), second_output_grad_(args->dim),
         uniform(0, 1), rng(seed) {
     first_embedding_ = first_embedding;
@@ -51,36 +57,38 @@ namespace fasttext {
 
   void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
                                 const std::vector<int32_t> &words,
-                                Vector &hidden) const {
-    hidden.zero();
+                                Vector &hidden_input,
+                                Vector &hidden_output) const {
+    hidden_input.zero();
     for (auto it = words.cbegin(); it != words.cend(); ++it) {
-      hidden.addRow(*embedding, *it);
+      hidden_input.addRow(*embedding, *it);
     }
-    hidden.l2Norm();
+    hidden_output.l2Norm(hidden_input);
   }
 
   void PairModel::updateHidden(std::shared_ptr<Matrix> embedding,
                                const std::vector<int32_t>& input,
-     			       const Vector& hidden1,
-                               Vector& hidden1_grad) {
+                               const Vector& hidden_input,
+                               Vector& hidden_grad) {
 
-    hidden1_grad.l2NormUpdate(hidden1);
+    hidden_grad.l2NormUpdate(hidden_input);
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
-      embedding->addRow(hidden1_grad, *it, 1.0);
+      embedding->addRow(hidden_grad, *it, 1.0);
     }
   }
 
   real PairModel::predict(const std::vector<int32_t>& first,
                           const std::vector<int32_t>& second) const {
     if (first.size() < 30 || second.size() < 30) return 0.0;
-    Vector first_hidden1(args_->dim), second_hidden1(args_->dim);
-    computeHidden(first_embedding_, first, first_hidden1);
-    computeHidden(second_embedding_, second, second_hidden1);
+    Vector first_hidden1_input(args_->dim), first_hidden1_output(args_->dim);
+    Vector second_hidden1_input(args_->dim), second_hidden1_output(args_->dim);
+    computeHidden(first_embedding_, first, first_hidden1_input, first_hidden1_output);
+    computeHidden(second_embedding_, second, second_hidden1_input, second_hidden1_output);
 
     Vector first_output(args_->dim), second_output(args_->dim);
 
-    first_output.mul(*first_w1_, first_hidden1);
-    second_output.mul(*second_w1_, second_hidden1);
+    first_output.mul(*first_w1_, first_hidden1_output);
+    second_output.mul(*second_w1_, second_hidden1_output);
 
     return sigmoid(dot(first_output, second_output));
   }
@@ -159,10 +167,10 @@ namespace fasttext {
 
     if (first_dropout_input_.size() < 5 || second_dropout_input_.size() < 5) return;
 
-    computeHidden(first_embedding_, first_dropout_input_, first_hidden1_);
-    computeHidden(second_embedding_, second_dropout_input_, second_hidden1_);
-    first_output_.mul(*first_w1_, first_hidden1_);
-    second_output_.mul(*second_w1_, second_hidden1_);
+    computeHidden(first_embedding_, first_dropout_input_, first_hidden1_intput_, first_hidden1_output_);
+    computeHidden(second_embedding_, second_dropout_input_, second_hidden1_input_, second_hidden1_output_);
+    first_output_.mul(*first_w1_, first_hidden1_output_);
+    second_output_.mul(*second_w1_, second_hidden1_output_);
 
     real prob = sigmoid(dot(first_output_, second_output_));
 
@@ -182,7 +190,7 @@ namespace fasttext {
     first_output_grad_.addVec(second_output_, alpha);
 
     update(first_dropout_input_,
-           first_embedding_, first_hidden1_, first_hidden1_grad_,
+           first_embedding_, first_hidden1_intput_, first_hidden1_grad_,
            first_w1_, first_output_, first_output_grad_);
 
 
@@ -191,21 +199,21 @@ namespace fasttext {
     second_output_grad_.addVec(first_output_, alpha);
 
     update(second_dropout_input_,
-           second_embedding_, second_hidden1_, second_hidden1_grad_,
+           second_embedding_, second_hidden1_input_, second_hidden1_grad_,
            second_w1_, second_output_, second_output_grad_);
 
   }
 
   void PairModel::getFirstOutput(const std::vector<int32_t>& words, Vector& output) const {
-    Vector hidden(args_->dim);
-    computeHidden(first_embedding_, words, hidden);
-    output.mul(*first_w1_, hidden);
+    Vector hidden_input(args_->dim), hidden_output(args_->dim);
+    computeHidden(first_embedding_, words, hidden_input, hidden_output);
+    output.mul(*first_w1_, hidden_output);
   }
 
   void PairModel::getSecondOutput(const std::vector<int32_t>& words, Vector& output) const {
-    Vector hidden(args_->dim);
-    computeHidden(second_embedding_, words, hidden);
-    output.mul(*first_w1_, hidden);
+    Vector hidden_input(args_->dim), hidden_output(args_->dim);
+    computeHidden(second_embedding_, words, hidden_input, hidden_output);
+    output.mul(*first_w1_, hidden_output);
   }
 
   real PairModel::similarity(Vector &first, Vector &second) const {

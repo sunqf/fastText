@@ -116,10 +116,10 @@ int64_t Vector::argmax() {
   return argmax;
 }
 
-void Vector::l2Norm() {
+void Vector::l2Norm(const Vector& input) {
   real len = sqrtf(dot(*this, *this));
   for (int64_t i = 0; i < m_; i++) {
-    data_[i] = data_[i] / len;
+    data_[i] = input.data_[i] / len;
   }
 }
 

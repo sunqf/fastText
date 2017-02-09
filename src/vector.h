@@ -43,8 +43,10 @@ class Vector {
     void mul(const Matrix&, const Vector&, const Vector&, real alpha = 1.0);
     void mul(const Vector&, const Vector&);
     int64_t argmax();
-    void l2Norm();
+    void l2Norm(const Vector&);
     void l2NormUpdate(const Vector& vec);
+
+    void exp();
 };
 
 std::ostream& operator<<(std::ostream&, const Vector&);
