@@ -28,6 +28,7 @@ enum class entry_type : int8_t {word=0, label=1};
 struct entry {
   std::string word;
   int64_t count;
+  real tf;
   entry_type type;
   std::vector<int32_t> subwords;
 };
@@ -61,6 +62,7 @@ class Dictionary {
     int64_t ntokens() const;
     int32_t getId(const std::string&) const;
     entry_type getType(int32_t) const;
+    real getTF(int32_t) const;
     bool discard(int32_t, real) const;
     std::string getWord(int32_t) const;
     const std::vector<int32_t>& getNgrams(int32_t) const;
@@ -75,12 +77,17 @@ class Dictionary {
     void save(std::ostream&) const;
     void load(std::istream&);
     void build(std::istream&);
+
     std::vector<int64_t> getCounts(entry_type) const;
     void addNgrams(std::vector<int32_t>&, int32_t) const;
     int32_t getLine(std::istream&, std::vector<int32_t>&,
                     std::vector<int32_t>&, std::minstd_rand&) const;
     int32_t getLine(const std::string&, std::vector<int32_t>&, std::minstd_rand&) const;
+    int32_t getLine(const std::string&, std::vector<std::pair<int32_t, real>>&, std::minstd_rand&) const;
+
     int32_t getWords(const std::string&, std::vector<int32_t>&, int, std::minstd_rand&) const;
+
+    int32_t getWords(const std::string&, std::vector<std::pair<int32_t, real>>&, int, std::minstd_rand&) const;
     void threshold(int64_t, int64_t);
 
     void printWord();

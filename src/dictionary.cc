@@ -117,6 +117,14 @@ std::string Dictionary::getWord(int32_t id) const {
   }
 }
 
+real Dictionary::getTF(int32_t id) const {
+  assert(id >= 0);
+  if (id < size_) {
+    return words_[id].tf;
+  } else {
+    return 0.0;
+  }
+}
 uint32_t Dictionary::hash(const std::string& str) const {
   uint32_t h = 2166136261;
   for (size_t i = 0; i < str.size(); i++) {
@@ -317,6 +325,29 @@ int32_t Dictionary::getLine(const std::string &line,
   return ntokens;
 }
 
+int32_t Dictionary::getLine(const std::string &line,
+                            std::vector<std::pair<int32_t, real>>& words,
+                            std::minstd_rand& rng) const {
+  std::uniform_real_distribution<> uniform(0, 1);
+  std::string token;
+  int32_t ntokens = 0;
+  words.clear();
+  std::stringstream ss(line);
+  while (readWord(ss, token)) {
+    if (token == EOS) break;
+    int32_t wid = getId(token);
+    real tf = getTF(wid);
+    if (wid < 0) continue;
+    entry_type type = getType(wid);
+    ntokens++;
+    if (type == entry_type::word && !discard(wid, uniform(rng))) {
+      words.push_back(std::make_pair(wid, tf));
+    }
+    if (words.size() > MAX_LINE_SIZE && args_->model != model_name::sup) break;
+  }
+  return ntokens;
+}
+
 int32_t Dictionary::getWords(const std::string &line,
                              std::vector<int32_t>& words,
                              int ngram,
@@ -333,6 +364,19 @@ int32_t Dictionary::getWords(const std::string &line,
   return ntokens;
 }
 
+int32_t Dictionary::getWords(const std::string &line,
+                             std::vector<std::pair<int32_t, real>>& words,
+                             int ngram,
+                             std::minstd_rand& rng) const {
+  words.clear();
+  std::vector<std::string> items = utils::split(line, '\t');
+  std::vector<int32_t> temp;
+  int32_t ntokens = 0;
+  for (int32_t i = 1; i < items.size(); i++) {
+    ntokens += getLine(items[i], temp, rng);
+  }
+  return ntokens;
+}
 
 std::string Dictionary::getLabel(int32_t lid) const {
   assert(lid >= 0);
@@ -391,6 +435,16 @@ void Dictionary::build(std::istream& in) {
     words_.push_back(e);
   }
   threshold(args_->minCount, args_->minCountLabel);
+
+  // calc TF
+
+  long sum = 0;
+  for (auto it = words_.cbegin(); it != words_.cend(); it++) {
+    sum += it->count;
+  }
+  for (auto it = words_.begin(); it != words_.end(); it++) {
+    it->tf = real(it->count) / sum;
+  }
 }
 
 void Dictionary::printWord() {

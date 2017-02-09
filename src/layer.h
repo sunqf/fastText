@@ -65,5 +65,10 @@ public:
               bool label, real weight, real lr,
               Vector& firstGrad, Vector& secondGrad);
 };
+
+
+class Sigmoid {
+
+};
 }
 #endif //FASTTEXT_LAYER_H

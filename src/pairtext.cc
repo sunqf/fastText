@@ -133,8 +133,8 @@ namespace fasttext {
   }
 
   void PairText::supervised(PairModel& model, real lr,
-                            const std::vector<int32_t>& first,
-                            const std::vector<int32_t>& second,
+                            const std::vector<std::pair<int32_t, real>>& first,
+                            const std::vector<std::pair<int32_t, real>>& second,
                             const bool label,
                             real weight) {
     if (first.size() == 0 || second.size() == 0) return;
@@ -147,8 +147,8 @@ namespace fasttext {
     int32_t nTrue = 0; // TT + TF
     double nTT = 0; // TT
     double precision = 0.0;
-    std::vector<int32_t> first_line;
-    std::vector<int32_t> second_line;
+    std::vector<std::pair<int32_t, real>> first_line;
+    std::vector<std::pair<int32_t, real>> second_line;
 
     while (in.peek() != EOF) {
       std::string first, second, step;
@@ -185,8 +185,8 @@ namespace fasttext {
 
   real PairText::predictProbability(std::istream& in) const {
     int32_t label;
-    std::vector<int32_t> first_words;
-    std::vector<int32_t> second_words;
+    std::vector<std::pair<int32_t, real>> first_words;
+    std::vector<std::pair<int32_t, real>> second_words;
 
     std::string first_line, second_line;
     getline(in, first_line);
@@ -199,8 +199,8 @@ namespace fasttext {
 
   real PairText::predictProbability(const std::string& first, const std::string& second) const {
     if (first.length() == 0 || second.length() == 0) return 0.0;
-    std::vector<int32_t> first_words;
-    std::vector<int32_t> second_words;
+    std::vector<std::pair<int32_t, real>> first_words;
+    std::vector<std::pair<int32_t, real>> second_words;
     first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
     second_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
     if (first_words.empty() || second_words.empty()) return 0.0;
@@ -313,7 +313,7 @@ namespace fasttext {
 
     int64_t localTokenCount = 0;
     std::string first, second, third;
-    std::vector<int32_t> first_words, second_words;
+    std::vector<std::pair<int32_t, real>> first_words, second_words;
     bool label;
     real weight = 1.0;
     while (ifs.tellg() > 0 && ifs.tellg() < endPos) {
@@ -393,7 +393,7 @@ namespace fasttext {
       std::cerr << "There are some problems in model" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::vector<int32_t> first_words, second_words;
+    std::vector<std::pair<int32_t, real>> first_words, second_words;
     first_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
     first_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
 
@@ -405,7 +405,7 @@ namespace fasttext {
       std::cerr << "There are some problems in model" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::vector<int32_t> first_words, second_words;
+    std::vector<std::pair<int32_t, real>> first_words, second_words;
     second_dict_->getWords(first, first_words, args_->wordNgrams, model_->rng);
     second_dict_->getWords(second, second_words, args_->wordNgrams, model_->rng);
 
@@ -466,7 +466,7 @@ namespace fasttext {
     real localLoss = 0.0;
 
     std::string first, second, third;
-    std::vector<int32_t> first_words, second_words;
+    std::vector<std::pair<int32_t, real>> first_words, second_words;
     bool label;
     real weight = 1.0;
     while (ifs.tellg() > 0 && ifs.tellg() < endPos) {
@@ -551,7 +551,7 @@ namespace fasttext {
 
     numToken = 0;
     std::string first, second, label;
-    std::vector<int32_t> first_words, second_words;
+    std::vector<std::pair<int32_t, real>> first_words, second_words;
     std::minstd_rand rng(0);
     while (getline(train_fs, first) && getline(train_fs, second) && getline(train_fs, label)) {
       int32_t numToken1 = first_dict_->getLine(first, first_words, rng);

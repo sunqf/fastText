@@ -81,11 +81,11 @@ namespace fasttext {
   */
 
   void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
-                                const std::vector<int32_t> &words,
+                                const std::vector<std::pair<int32_t, real>> &words,
                                 Vector &hidden_input, Vector &hidden_output) const {
     hidden_input.zero();
     for (auto it = words.cbegin(); it != words.cend(); ++it) {
-      hidden_input.addRow(*embedding, *it);
+      hidden_input.addRow(*embedding, it->first, it->second);
     }
     for (auto i = 0; i < hidden_output.m_; i++) {
       hidden_output.data_[i] = sigmoid(hidden_input.data_[i]);
@@ -93,19 +93,19 @@ namespace fasttext {
   }
 
   void PairModel::updateHidden(std::shared_ptr<Matrix> embedding,
-                               const std::vector<int32_t> &input,
+                               const std::vector<std::pair<int32_t, real>> &input,
                                const Vector &hidden_input,
                                Vector &hidden1_grad) {
     for (auto i = 0; i < hidden_input.m_; i++) {
       hidden1_grad.data_[i] *= sigmoid(hidden_input.data_[i]) * (1 - sigmoid(hidden_input.data_[i]));
     }
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
-      embedding->addRow(hidden1_grad, *it, 1.0);
+      embedding->addRow(hidden1_grad, it->first, it->second);
     }
   }
 
-  real PairModel::predict(const std::vector<int32_t>& first,
-                          const std::vector<int32_t>& second) const {
+  real PairModel::predict(const std::vector<std::pair<int32_t, real>>& first,
+                          const std::vector<std::pair<int32_t, real>>& second) const {
     if (first.size() < 30 || second.size() < 30) return 0.0;
     Vector first_hidden1_input(args_->dim), first_hidden1_output(args_->dim);
     Vector second_hidden1_input(args_->dim), second_hidden1_output(args_->dim);
@@ -158,7 +158,7 @@ namespace fasttext {
 */
 
 
-  void PairModel::update(const std::vector<int32_t>& input,
+  void PairModel::update(const std::vector<std::pair<int32_t, real>>& input,
                          std::shared_ptr<Matrix> embedding,
                          const Vector& hidden1_input,
                          const Vector& hidden1_output,
@@ -174,8 +174,8 @@ namespace fasttext {
     updateHidden(embedding, input, hidden1_input, hidden1_grad);
   }
 
-  void PairModel::update(const std::vector<int32_t>& first_input,
-                         const std::vector<int32_t>& second_input,
+  void PairModel::update(const std::vector<std::pair<int32_t, real>>& first_input,
+                         const std::vector<std::pair<int32_t, real>>& second_input,
                          const bool label,
                          real lr,
                          real weight) {
@@ -232,13 +232,13 @@ namespace fasttext {
 
   }
 
-  void PairModel::getFirstOutput(const std::vector<int32_t>& words, Vector& output) const {
+  void PairModel::getFirstOutput(const std::vector<std::pair<int32_t, real>>& words, Vector& output) const {
     Vector hidden_input(args_->dim), hidden_output(args_->dim);
     computeHidden(first_embedding_, words, hidden_input, hidden_output);
     output.mul(*first_w1_, hidden_output);
   }
 
-  void PairModel::getSecondOutput(const std::vector<int32_t>& words, Vector& output) const {
+  void PairModel::getSecondOutput(const std::vector<std::pair<int32_t, real>>& words, Vector& output) const {
     Vector hidden_input(args_->dim), hidden_output(args_->dim);
     computeHidden(second_embedding_, words, hidden_input, hidden_output);
     output.mul(*first_w1_, hidden_output);
@@ -253,16 +253,16 @@ namespace fasttext {
     return 0.0;
   }
 
-  real PairModel::firstSimilarity(const std::vector<int32_t> &first_words,
-                                  const std::vector<int32_t> &second_words) const {
+  real PairModel::firstSimilarity(const std::vector<std::pair<int32_t, real>> &first_words,
+                                  const std::vector<std::pair<int32_t, real>> &second_words) const {
     Vector first_output(args_->dim), second_output(args_->dim);
     getFirstOutput(first_words, first_output);
     getFirstOutput(second_words, second_output);
     return similarity(first_output, second_output);
   }
 
-  real PairModel::secondSimilarity(const std::vector<int32_t> &first_words,
-                                   const std::vector<int32_t> &second_words) const {
+  real PairModel::secondSimilarity(const std::vector<std::pair<int32_t, real>> &first_words,
+                                   const std::vector<std::pair<int32_t, real>> &second_words) const {
     Vector first_output(args_->dim), second_output(args_->dim);
     getSecondOutput(first_words, first_output);
     getSecondOutput(second_words, second_output);

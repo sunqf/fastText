@@ -44,7 +44,7 @@ namespace fasttext {
     std::shared_ptr<Matrix> second_embedding_;
     std::shared_ptr<Matrix> second_w1_;
 
-    std::vector<int32_t> first_dropout_input_;
+    std::vector<std::pair<int32_t, real>> first_dropout_input_;
     //Vector first_hidden1_;
     Vector first_hidden1_intput_;
     Vector first_hidden1_output_;
@@ -52,7 +52,7 @@ namespace fasttext {
     Vector first_output_;
     Vector first_output_grad_;
 
-    std::vector<int32_t > second_dropout_input_;
+    std::vector<std::pair<int32_t, real>> second_dropout_input_;
     //Vector second_hidden1_;
     Vector second_hidden1_input_;
     Vector second_hidden1_output_;
@@ -83,17 +83,17 @@ namespace fasttext {
     real log(real) const;
 
     void computeHidden(const std::shared_ptr<Matrix> embedding,
-                       const std::vector<int32_t>& words,
+                       const std::vector<std::pair<int32_t,real>>& words,
                        Vector& hidden_input,
                        Vector& hidden_output) const;
 
     void updateHidden(std::shared_ptr<Matrix> embedding,
-                      const std::vector<int32_t>& input,
+                      const std::vector<std::pair<int32_t, real>>& input,
                       const Vector& hidden_input,
                       Vector& hidden1_grad);
 
-    void getFirstOutput(const std::vector<int32_t>& words, Vector& output) const;
-    void getSecondOutput(const std::vector<int32_t>& words, Vector& output) const;
+    void getFirstOutput(const std::vector<std::pair<int32_t, real>>& words, Vector& output) const;
+    void getSecondOutput(const std::vector<std::pair<int32_t, real>>& words, Vector& output) const;
 
     real similarity(Vector& first, Vector& second) const;
   public:
@@ -104,10 +104,10 @@ namespace fasttext {
               std::shared_ptr<Args> args,
               int32_t seed);
 
-    real predict(const std::vector<int32_t>& first,
-                 const std::vector<int32_t>& second) const;
+    real predict(const std::vector<std::pair<int32_t, real>>& first,
+                 const std::vector<std::pair<int32_t, real>>& second) const;
 
-    void update(const std::vector<int32_t>& input,
+    void update(const std::vector<std::pair<int32_t, real>>& input,
                 std::shared_ptr<Matrix> embedding,
                 const Vector& hidden1_input,
                 const Vector& hidden1_output,
@@ -116,18 +116,18 @@ namespace fasttext {
                 const Vector& output,
                 const Vector& output_grad);
 
-    void update(const std::vector<int32_t>& first_input,
-                const std::vector<int32_t>& second_input,
+    void update(const std::vector<std::pair<int32_t, real>>& first_input,
+                const std::vector<std::pair<int32_t, real>>& second_input,
                 const bool label,
                 real lr,
                 real weight = 1.0);
 
 
-    real firstSimilarity(const std::vector<int32_t>& first_words,
-                         const std::vector<int32_t>& second_words) const;
+    real firstSimilarity(const std::vector<std::pair<int32_t, real>>& first_words,
+                         const std::vector<std::pair<int32_t, real>>& second_words) const;
 
-    real secondSimilarity(const std::vector<int32_t>& first_words,
-                          const std::vector<int32_t>& second_words) const;
+    real secondSimilarity(const std::vector<std::pair<int32_t, real>>& first_words,
+                          const std::vector<std::pair<int32_t, real>>& second_words) const;
 
     real getObjLoss() { return objLoss_ / nexamples_; }
     real getL2Loss() { return l2Loss_ / nexamples_; }

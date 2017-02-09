@@ -67,8 +67,8 @@ public:
   void printInfo(real, real, real, real);
 
   void supervised(PairModel&, real,
-                  const std::vector<int32_t>&,
-                  const std::vector<int32_t>&,
+                  const std::vector<std::pair<int32_t, real>>&,
+                  const std::vector<std::pair<int32_t, real>>&,
                   const bool label,
                   real weight);
 
