@@ -85,6 +85,13 @@ real Matrix::dotRow(const Vector& vec, int64_t i) {
   return d;
 }
 
+void Matrix::getRow(const int64_t i, Vector &v) {
+  assert(v.m_ == n_);
+  for (int64_t j = 0; j < n_; j++) {
+    v.data_[j] = data_[i * n_ + j];
+  }
+}
+
 void Matrix::addMatrix(const Vector& left, const Vector& right) {
   assert(m_ == left.m_);
   assert(n_ == right.m_);

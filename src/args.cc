@@ -74,9 +74,9 @@ void Args::parseArgs(int argc, char** argv) {
       output = std::string(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-lr") == 0) {
       lr = atof(argv[ai + 1]);
-    } else if (strcmp(argv[ai], "l1") == 0) {
+    } else if (strcmp(argv[ai], "-l1") == 0) {
       l1 = atof(argv[ai + 1]);
-    } else if (strcmp(argv[ai], "l2") == 0) {
+    } else if (strcmp(argv[ai], "-l2") == 0) {
       l2 = atof(argv[ai + 1]);
     } else if (strcmp(argv[ai], "-lrUpdateRate") == 0) {
       lrUpdateRate = atoi(argv[ai + 1]);

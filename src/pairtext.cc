@@ -116,7 +116,7 @@ namespace fasttext {
 
   }
 
-  void PairText::printInfo(real progress, real loss) {
+  void PairText::printInfo(real progress, real loss, real objLoss, real l2Loss) {
     real t = real(clock() - start) / CLOCKS_PER_SEC;
     real wst = real(tokenCount) / t;
     real lr = args_->lr * (1.0 - progress);
@@ -127,7 +127,7 @@ namespace fasttext {
     std::cout << "\rProgress: " << std::setprecision(1) << 100 * progress << "%";
     std::cout << "  words/sec/thread: " << std::setprecision(0) << wst;
     std::cout << "  lr: " << std::setprecision(6) << lr;
-    std::cout << "  loss: " << std::setprecision(6) << loss;
+    std::cout << "  loss: " << std::setprecision(6) << loss << "  obj loss: " <<  std::setprecision(6) << objLoss << "  l2 loss:  " << std::setprecision(6) << l2Loss;
     std::cout << "  eta: " << etah << "h" << etam << "m ";
     std::cout << std::flush;
   }
@@ -160,7 +160,7 @@ namespace fasttext {
       getline(in, step);
       bool label;
       real weight = 1.0;
-      if (convertLabel(step, label, weight) && first_line.size() > 10 && second_line.size() > 10) {
+      if (convertLabel(step, label, weight) && first_line.size() > 30 && second_line.size() > 30) {
         real prob = model_->predict(first_line, second_line);
         if (label == true) {
           nTrue++;
@@ -168,11 +168,16 @@ namespace fasttext {
             precision += 1.0;
             nTT++;
           }
-        } else if (prob < 0.5 && label == false) precision += 1.0;
+        } else if (prob < 0.5 && label == false) {
+          precision += 1.0;
+        }
         nexamples++;
       }
     }
     std::cout << std::setprecision(3);
+    std::cout << "nexamples" << ": " << nexamples << std::endl;
+    std::cout << "nTrue" << ": " << nTrue << std::endl;
+    std::cout << "nTT" << ": " << nTT << std::endl;
     std::cout << "Prec" << ": " << precision / nexamples << std::endl;
     std::cout << "Recal" << ": " << nTT / nTrue << std::endl;
     std::cout << "Number of examples: " << nexamples << std::endl;
@@ -188,7 +193,7 @@ namespace fasttext {
     getline(in, second_line);
     first_dict_->getWords(first_line, first_words, args_->wordNgrams, model_->rng);
     second_dict_->getWords(second_line, second_words, args_->wordNgrams, model_->rng);
-    if (first_words.size() > 10 || second_words.size() > 10) return 0.0;
+    if (first_words.size() > 30 || second_words.size() > 30) return 0.0;
     return model_->predict(first_words, second_words);
   }
 
@@ -324,7 +329,7 @@ namespace fasttext {
       localTokenCount += second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
 
 
-      if (!convertLabel(third, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
+      if (!convertLabel(third, label, weight) || first_words.size() < 30 || second_words.size() < 30) continue;
 
       //first_dict_->addNgrams(first_words, args_->wordNgrams);
       //second_dict_->addNgrams(second_words, args_->wordNgrams);
@@ -334,7 +339,7 @@ namespace fasttext {
         tokenCount += localTokenCount;
         localTokenCount = 0;
         if (threadId == 0 && args_->verbose > 1) {
-          printInfo(progress, model.getLoss());
+          printInfo(progress, model.getLoss(), model.getObjLoss(), model.getL2Loss());
         }
       }
     }
@@ -407,6 +412,45 @@ namespace fasttext {
     return model_->secondSimilarity(first_words, second_words);
   }
 
+  bool compare(std::pair<int32_t, real> first,
+               std::pair<int32_t, real> second) {
+    return (first.second > second.second);
+  }
+
+  void PairText::findSimilarityWords(std::shared_ptr<Dictionary> dict,
+                                     std::shared_ptr<Matrix> embedding,
+                                     std::string& word, int32_t n) const {
+    int32_t id = dict->getId(word);
+    std::vector<std::pair<int32_t, real>> id2prob(dict->nwords());
+    Vector vec(args_->dim);
+    embedding->getRow(id, vec);
+    Vector curVec(args_->dim);
+    for (int32_t i = 0; i < dict->nwords(); i++) {
+      if (i != id) {
+        embedding->getRow(i, curVec);
+        real cos = cosine(vec, curVec);
+        id2prob[i] = std::make_pair(i, cos);
+      }
+    }
+    std::sort(id2prob.begin(), id2prob.end(), compare);
+    for (int i = 0; i < n; i++) {
+      std::cout << dict->getWord(id2prob[i].first) << " " << id2prob[i].second << std::endl;
+    }
+  }
+
+  void PairText::findSimilarityWords() const {
+    int32_t dir;
+    std::string word;
+    int32_t n = 10;
+    while (std::cin >> dir >> word >> n) {
+      if (dir == 1) {
+        findSimilarityWords(first_dict_, first_embedding_, word, n);
+      } else if (dir == 2) {
+        findSimilarityWords(second_dict_, second_embedding_, word, n);
+      }
+    }
+  }
+
   void PairText::validFunc(int32_t threadId, std::shared_ptr<real> pLoss, std::shared_ptr<int32_t> nexamples) const {
     std::ifstream ifs(args_->valid);
     utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
@@ -434,7 +478,7 @@ namespace fasttext {
 
       second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
 
-      if (!convertLabel(third, label, weight) || first_words.size() < 10 || second_words.size() < 10) continue;
+      if (!convertLabel(third, label, weight) || first_words.size() < 30 || second_words.size() < 30) continue;
 
       real prob = model.predict(first_words, second_words);
 

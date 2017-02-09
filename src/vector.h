@@ -43,10 +43,13 @@ class Vector {
     void mul(const Matrix&, const Vector&, const Vector&, real alpha = 1.0);
     void mul(const Vector&, const Vector&);
     int64_t argmax();
+    void l2Norm();
+    void l2NormUpdate(const Vector& vec);
 };
 
 std::ostream& operator<<(std::ostream&, const Vector&);
 real dot(const Vector& first, const Vector& second);
+real cosine(const Vector& first, const Vector& second);
 
 real xMy(const Vector& x, const Matrix& m, const Vector& y);
 }

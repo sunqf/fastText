@@ -1,6 +1,6 @@
 #include "pairtext.h"
+#include "alstext.h"
 using namespace fasttext;
-
 
 extern "C" {
 PairText* init(char* path) {

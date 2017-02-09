@@ -40,7 +40,7 @@ class Matrix {
     void addMatrix(const Vector& left, const Vector& right);
     void addMatrix(const Matrix& matrix, real alpha);
     void add(const Vector& x, const Vector& y, real alpha);
-    Vector getRow(const int64_t);
+    void getRow(const int64_t, Vector&);
     void save(std::ostream&);
     void load(std::istream&);
 };

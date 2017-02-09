@@ -196,11 +196,14 @@ namespace fasttext {
 
 
   real ALSModel::loss(bool label, real prob, real weight) const {
+    return powf(real(label) - prob, 2.0) * weight;
+/*
     if (label) {
       return -log(prob) * weight;
     } else {
       return -log(1.0 - prob) * weight;
     }
+*/
   }
 
   void ALSModel::initSigmoid() {

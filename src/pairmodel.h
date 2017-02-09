@@ -65,7 +65,8 @@ namespace fasttext {
 
 
     long nexamples_;
-    real loss_;
+    real objLoss_;
+    real l2Loss_;
 
     real* t_sigmoid;
     real* t_log;
@@ -80,6 +81,11 @@ namespace fasttext {
     void computeHidden(const std::shared_ptr<Matrix> embedding,
                        const std::vector<int32_t>& words,
                        Vector& hidden) const;
+
+    void updateHidden(std::shared_ptr<Matrix> embedding,
+                      const std::vector<int32_t>& input,
+                      const Vector& hidden,
+                      Vector& hidden1_grad);
 
     void getFirstOutput(const std::vector<int32_t>& words, Vector& output) const;
     void getSecondOutput(const std::vector<int32_t>& words, Vector& output) const;
@@ -117,7 +123,10 @@ namespace fasttext {
     real secondSimilarity(const std::vector<int32_t>& first_words,
                           const std::vector<int32_t>& second_words) const;
 
-    real getLoss() { return loss_ / nexamples_; }
+    real getObjLoss() { return objLoss_ / nexamples_; }
+    real getL2Loss() { return l2Loss_ / nexamples_; }
+
+    real getLoss() { return (objLoss_ + l2Loss_) / nexamples_; }
 
     real loss(bool label, real prob, real weight) const;
 

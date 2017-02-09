@@ -116,6 +116,26 @@ int64_t Vector::argmax() {
   return argmax;
 }
 
+void Vector::l2Norm() {
+  real len = sqrtf(dot(*this, *this));
+  for (int64_t i = 0; i < m_; i++) {
+    data_[i] = data_[i] / len;
+  }
+}
+
+void Vector::l2NormUpdate(const Vector& x) {
+  real len = sqrt(dot(x, x));
+  for (int64_t i = 0; i < m_; i++) {
+    /*
+     * grad(x / sqrt(dot(x, x)) = 1 / sqrt(dot(x, x)) - x / dot(x, x) * grad(sqrt(dot(x, x))
+     *                       = 1 / sqrt(x, x) - x / dot(x, x) * 0.5 * (1 / sqrt(dot(x, x)) * grad(dot(x, x))
+     *                       = 1 / sqrt(x, x) - x / dot(x, x) * 0.5 * (1 / sqrt(dot(x, x)) * 2 * x
+     *                       = 1 / sqrt(x, x) - x * x / (dot(x, x) * sqrt(dot(x, x))
+     */
+    data_[i] *= 1 / len - x.data_[i] * x.data_[i] / (len * len * len);
+  }
+}
+
 real& Vector::operator[](int64_t i) {
   return data_[i];
 }
@@ -139,6 +159,12 @@ real dot(const Vector& first, const Vector& second) {
     dist += first[i] * second[i];
   }
   return dist;
+}
+
+real cosine(const Vector& first, const Vector& second) {
+  real ff = dot(first, first);
+  real ss = dot(second, second);
+  return dot(first, second) / sqrtf(ff * ss);
 }
 
 real xMy(const Vector& x, const Matrix& m, const Vector& y) {

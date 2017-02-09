@@ -123,6 +123,11 @@ void printVectors(int argc, char** argv) {
   exit(0);
 }
 
+void getSimilarityWords(int argc, char ** argv) {
+  PairText pairText;
+  pairText.loadModel(std::string(argv[2]));
+  pairText.findSimilarityWords();
+}
 /*
 void printEmbedding(int argc, char** argv) {
   if (argc != 3) {
@@ -155,7 +160,7 @@ int main(int argc, char** argv) {
   } else if (command == "print-vectors") {
     printVectors(argc, argv);
   } else if (command == "word-embedding") {
-    //printEmbedding(argc, argv);
+    getSimilarityWords(argc, argv);
   } else if (command == "predict" || command == "predict-prob" ) {
     predict(argc, argv);
   } else {

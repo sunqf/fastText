@@ -54,6 +54,9 @@ private:
    * @return 如果转换成功返回true, 否则返回false
    */
   bool convertLabel(const std::string&, bool&, real&) const;
+
+  void findSimilarityWords(std::shared_ptr<Dictionary>, std::shared_ptr<Matrix>, std::string&, int32_t) const;
+
 public:
   void getFirstVector(Vector&, const std::string&);
   void getSecondVector(Vector&, const std::string&);
@@ -61,7 +64,7 @@ public:
   void saveModel();
   void loadModel(const std::string&);
   void loadModel(std::istream&);
-  void printInfo(real, real);
+  void printInfo(real, real, real, real);
 
   void supervised(PairModel&, real,
                   const std::vector<int32_t>&,
@@ -86,6 +89,9 @@ public:
 
   real firstSimilarity(const std::string&, const std::string&) const;
   real secondSimilarity(const std::string&, const std::string&) const;
+
+  void findSimilarityWords() const;
+
   void loadVectors(std::string, std::shared_ptr<Dictionary>, std::shared_ptr<Matrix>);
 };
 }

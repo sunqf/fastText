@@ -30,12 +30,13 @@ namespace fasttext {
     hsz_ = args_->dim;
     isz_ = args_->dim;
     osz_ = args_->dim;
-    loss_ = 0.0;
+    objLoss_ = 0.0;
+    l2Loss_ = 0.0;
     initSigmoid();
     initLog();
   }
 
-
+/*
   void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
                                 const std::vector<int32_t>& words,
                                 Vector& hidden) const {
@@ -46,10 +47,32 @@ namespace fasttext {
     }
     hidden.mul(1.0 / words.size());
   }
+*/
+
+  void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
+                                const std::vector<int32_t> &words,
+                                Vector &hidden) const {
+    hidden.zero();
+    for (auto it = words.cbegin(); it != words.cend(); ++it) {
+      hidden.addRow(*embedding, *it);
+    }
+    hidden.l2Norm();
+  }
+
+  void PairModel::updateHidden(std::shared_ptr<Matrix> embedding,
+                               const std::vector<int32_t>& input,
+     			       const Vector& hidden1,
+                               Vector& hidden1_grad) {
+
+    hidden1_grad.l2NormUpdate(hidden1);
+    for (auto it = input.cbegin(); it != input.cend(); ++it) {
+      embedding->addRow(hidden1_grad, *it, 1.0);
+    }
+  }
 
   real PairModel::predict(const std::vector<int32_t>& first,
                           const std::vector<int32_t>& second) const {
-    if (first.size() < 10 || second.size() < 10) return 0.0;
+    if (first.size() < 30 || second.size() < 30) return 0.0;
     Vector first_hidden1(args_->dim), second_hidden1(args_->dim);
     computeHidden(first_embedding_, first, first_hidden1);
     computeHidden(second_embedding_, second, second_hidden1);
@@ -79,6 +102,7 @@ namespace fasttext {
   }
 */
 
+/*
   void PairModel::update(const std::vector<int32_t>& input,
                          std::shared_ptr<Matrix> embedding,
                          const Vector& hidden1,
@@ -89,14 +113,30 @@ namespace fasttext {
     hidden1_grad.zero();
     hidden1_grad.mul(output_grad, *w1);
     w1->addMatrix(output_grad, hidden1);
-    w1->addMatrix(*w1, -2 * args_->l2);
+    w1->addMatrix(*w1, args_->l2);
 
     hidden1_grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
       embedding->addRow(hidden1_grad, *it, 1.0);
     }
   }
+*/
 
+
+  void PairModel::update(const std::vector<int32_t>& input,
+                         std::shared_ptr<Matrix> embedding,
+                         const Vector& hidden1,
+                         Vector& hidden1_grad,
+                         std::shared_ptr<Matrix> w1,
+                         const Vector& output,
+                         const Vector& output_grad) {
+    hidden1_grad.zero();
+    hidden1_grad.mul(output_grad, *w1);
+    w1->addMatrix(output_grad, hidden1);
+    //w1->addMatrix(*w1, -2 * args_->l2);
+
+    updateHidden(embedding, input, hidden1, hidden1_grad);
+  }
 
   void PairModel::update(const std::vector<int32_t>& first_input,
                          const std::vector<int32_t>& second_input,
@@ -127,12 +167,12 @@ namespace fasttext {
     real prob = sigmoid(dot(first_output_, second_output_));
 
     if (label) {
-      loss_ += -log(prob) * weight;
+      objLoss_ += -log(prob) * weight;
     } else {
-      loss_ += -log(1.0 - prob) * weight;
+      objLoss_ += -log(1.0 - prob) * weight;
     }
 
-    loss_ += args_->l2 * (dot(*first_w1_, *first_w1_) + dot(*second_w1_, *second_w1_)) * weight;
+    //l2Loss_ += 0.5 * args_->l2 * (dot(*first_w1_, *first_w1_) + dot(*second_w1_, *second_w1_)) * weight;
     nexamples_ += 1;
 
     real alpha = weight * lr * (real(label) - prob);
