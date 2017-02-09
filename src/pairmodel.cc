@@ -133,17 +133,18 @@ namespace fasttext {
 
   void PairModel::update(const std::vector<int32_t>& input,
                          std::shared_ptr<Matrix> embedding,
-                         const Vector& hidden1,
+                         const Vector& hidden1_input,
+                         const Vector& hidden1_output,
                          Vector& hidden1_grad,
                          std::shared_ptr<Matrix> w1,
                          const Vector& output,
                          const Vector& output_grad) {
     hidden1_grad.zero();
     hidden1_grad.mul(output_grad, *w1);
-    w1->addMatrix(output_grad, hidden1);
+    w1->addMatrix(output_grad, hidden1_output);
     //w1->addMatrix(*w1, -2 * args_->l2);
 
-    updateHidden(embedding, input, hidden1, hidden1_grad);
+    updateHidden(embedding, input, hidden1_input, hidden1_grad);
   }
 
   void PairModel::update(const std::vector<int32_t>& first_input,
@@ -190,7 +191,7 @@ namespace fasttext {
     first_output_grad_.addVec(second_output_, alpha);
 
     update(first_dropout_input_,
-           first_embedding_, first_hidden1_intput_, first_hidden1_grad_,
+           first_embedding_, first_hidden1_intput_, first_hidden1_output_, first_hidden1_grad_,
            first_w1_, first_output_, first_output_grad_);
 
 
@@ -199,7 +200,7 @@ namespace fasttext {
     second_output_grad_.addVec(first_output_, alpha);
 
     update(second_dropout_input_,
-           second_embedding_, second_hidden1_input_, second_hidden1_grad_,
+           second_embedding_, second_hidden1_input_, second_hidden1_output_, second_hidden1_grad_,
            second_w1_, second_output_, second_output_grad_);
 
   }

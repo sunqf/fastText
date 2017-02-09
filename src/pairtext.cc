@@ -554,8 +554,9 @@ namespace fasttext {
     std::vector<int32_t> first_words, second_words;
     std::minstd_rand rng(0);
     while (getline(train_fs, first) && getline(train_fs, second) && getline(train_fs, label)) {
-      numToken += first_dict_->getLine(first, first_words, rng);
-      numToken += second_dict_->getLine(second, second_words, rng);
+      int32_t numToken1 = first_dict_->getLine(first, first_words, rng);
+      int32_t numToken2 = second_dict_->getLine(second, second_words, rng);
+      if (numToken1 > 30 && numToken2 > 30) numToken += numToken1 + numToken2;
     }
     std::cout << "Total number of token: " << numToken << std::endl;
     second_fs.close();

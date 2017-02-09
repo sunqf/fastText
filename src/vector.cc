@@ -117,7 +117,7 @@ int64_t Vector::argmax() {
 }
 
 void Vector::l2Norm(const Vector& input) {
-  real len = sqrtf(dot(*this, *this));
+  real len = sqrtf(dot(input, input));
   for (int64_t i = 0; i < m_; i++) {
     data_[i] = input.data_[i] / len;
   }

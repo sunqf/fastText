@@ -109,7 +109,8 @@ namespace fasttext {
 
     void update(const std::vector<int32_t>& input,
                 std::shared_ptr<Matrix> embedding,
-                const Vector& hidden1,
+                const Vector& hidden1_input,
+                const Vector& hidden1_output,
                 Vector& hidden1_grad,
                 std::shared_ptr<Matrix> w1,
                 const Vector& output,
