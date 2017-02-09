@@ -55,6 +55,7 @@ namespace fasttext {
   }
 */
 
+/*
   void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
                                 const std::vector<int32_t> &words,
                                 Vector &hidden_input,
@@ -66,6 +67,7 @@ namespace fasttext {
     hidden_output.l2Norm(hidden_input);
   }
 
+
   void PairModel::updateHidden(std::shared_ptr<Matrix> embedding,
                                const std::vector<int32_t>& input,
                                const Vector& hidden_input,
@@ -74,6 +76,31 @@ namespace fasttext {
     hidden_grad.l2NormUpdate(hidden_input);
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
       embedding->addRow(hidden_grad, *it, 1.0);
+    }
+  }
+  */
+
+  void PairModel::computeHidden(const std::shared_ptr<Matrix> embedding,
+                                const std::vector<int32_t> &words,
+                                Vector &hidden_input, Vector &hidden_output) const {
+    hidden_input.zero();
+    for (auto it = words.cbegin(); it != words.cend(); ++it) {
+      hidden_input.addRow(*embedding, *it);
+    }
+    for (auto i = 0; i < hidden_output.m_; i++) {
+      hidden_output.data_[i] = sigmoid(hidden_input.data_[i]);
+    }
+  }
+
+  void PairModel::updateHidden(std::shared_ptr<Matrix> embedding,
+                               const std::vector<int32_t> &input,
+                               const Vector &hidden_input,
+                               Vector &hidden1_grad) {
+    for (auto i = 0; i < hidden_input.m_; i++) {
+      hidden1_grad.data_[i] *= sigmoid(hidden_input.data_[i]) * (1 - sigmoid(hidden_input.data_[i]));
+    }
+    for (auto it = input.cbegin(); it != input.cend(); ++it) {
+      embedding->addRow(hidden1_grad, *it, 1.0);
     }
   }
 

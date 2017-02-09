@@ -45,8 +45,6 @@ class Vector {
     int64_t argmax();
     void l2Norm(const Vector&);
     void l2NormUpdate(const Vector& vec);
-
-    void exp();
 };
 
 std::ostream& operator<<(std::ostream&, const Vector&);
