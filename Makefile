@@ -9,7 +9,7 @@
 
 CXX = c++
 CXXFLAGS = -pthread -std=c++0x -fPIC
-OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o interface.o alsmodel.o alstext.o
+OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o pairmodel.o pairtext.o interplatemodel.o interplatetext.o interface.o alsmodel.o alstext.o docsim.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
@@ -68,6 +68,9 @@ alsmodel.o: src/alsmodel.cc src/alsmodel.h src/args.h
 
 alstext.o: src/alstext.cc src/*.h
 	$(CXX) $(CXXFLAGS) -c src/alstext.cc
+
+docsim.o: src/docsim.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/docsim.cc
 
 alstext: $(OBJS) src/alstext.cc
 	$(CXX) $(CXXFLAGS) $(OBJS) src/alsmain.cc -o alstext
