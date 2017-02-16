@@ -162,6 +162,9 @@ namespace fasttext {
       real weight = 1.0;
       if (convertLabel(step, label, weight) && first_line.size() > 30 && second_line.size() > 30) {
         real prob = model_->predict(first_line, second_line);
+        std::cout << first << std::endl;
+        std::cout << second << std::endl;
+        std::cout << step << " " << prob << std::endl;
         if (label == true) {
           nTrue++;
           if (prob >= 0.5) {
@@ -286,7 +289,7 @@ namespace fasttext {
   bool PairText::convertLabel(const std::string &text, bool &label, real &weight) const {
     if (text == "INTERVIEW") {
       label = true;
-      weight = 1.0;
+      weight = 0.25;
       return true;
     } else if (text == "REFUSE") {
       label = false;
@@ -294,7 +297,7 @@ namespace fasttext {
       return true;
     } else if (text == "ACCEPT_INTERVIEW") {
       label = true;
-      weight = 1.0;
+      weight = 5.0;
       return true;
     }
     return false;
@@ -324,12 +327,14 @@ namespace fasttext {
       getline(ifs, second);
       getline(ifs, third);
       if (first.empty() || second.empty() || third.empty()) continue;
-      localTokenCount += first_dict_->getWords(first, first_words, args_->wordNgrams, model.rng);
 
-      localTokenCount += second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
+      int64_t tokenCount1 = first_dict_->getWords(first, first_words, args_->wordNgrams, model.rng);
 
+      int64_t tokenCount2 = second_dict_->getWords(second, second_words, args_->wordNgrams, model.rng);
+      
+      if (!convertLabel(third, label, weight) || tokenCount1 < 30 || tokenCount2 < 30) continue;
 
-      if (!convertLabel(third, label, weight) || first_words.size() < 30 || second_words.size() < 30) continue;
+      localTokenCount += tokenCount1 + tokenCount2;
 
       //first_dict_->addNgrams(first_words, args_->wordNgrams);
       //second_dict_->addNgrams(second_words, args_->wordNgrams);
@@ -434,7 +439,7 @@ namespace fasttext {
     }
     std::sort(id2prob.begin(), id2prob.end(), compare);
     for (int i = 0; i < n; i++) {
-      std::cout << dict->getWord(id2prob[i].first) << " " << id2prob[i].second << std::endl;
+      std::cout << dict->getWord(id2prob[i].first) << " " << dict->getCount(id2prob[i].first) << " " << id2prob[i].second << std::endl;
     }
   }
 
@@ -516,36 +521,57 @@ namespace fasttext {
   }
 
   void PairText::train(std::shared_ptr<Args> args) {
-    args_ = args;
-    first_dict_ = std::make_shared<Dictionary>(args_);
-    second_dict_ = std::make_shared<Dictionary>(args_);
-    if (args_->input == "-") {
+    if (args->input == "-") {
       // manage expectations
       std::cerr << "Cannot use stdin for training!" << std::endl;
       exit(EXIT_FAILURE);
     }
-    std::ifstream first_fs(args_->dict + ".first");
-    if (!first_fs.is_open()) {
-      std::cerr << "Input file cannot be opened!" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    first_dict_->build(first_fs);
-    first_fs.close();
 
-    std::cout << "first dict " << first_dict_->nwords() << std::endl;
+    std::ifstream model_fs(args->output, std::ifstream::binary);
+    if (model_fs.is_open()) {
+      loadModel(model_fs);
+      args_ = args;
+    } else {
+      args_ = args;
+      first_dict_ = std::make_shared<Dictionary>(args_);
+      second_dict_ = std::make_shared<Dictionary>(args_);
+      std::ifstream first_fs(args_->dict + ".first");
+      if (!first_fs.is_open()) {
+        std::cerr << "first dict " << args_->dict + ".first" << " cannot be opened!" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      first_dict_->build(first_fs);
+      first_fs.close();
+  
+      std::cout << "first dict " << first_dict_->nwords() << std::endl;
+  
+      std::ifstream second_fs(args_->dict + ".second");
+      if (!second_fs.is_open()) {
+        std::cerr << "second dict " << args_->dict + ".second" << " cannot be opened!" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      second_dict_->build(second_fs);
+      second_fs.close();
+      std::cout << "second dict " << second_dict_->nwords() << std::endl;
+  
 
-    std::ifstream second_fs(args_->dict + ".second");
-    if (!second_fs.is_open()) {
-      std::cerr << "Input file cannot be opened!" << std::endl;
-      exit(EXIT_FAILURE);
+      first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);
+      first_embedding_->uniform(1.0 / args_->dim);
+
+      second_embedding_ = std::make_shared<Matrix>(second_dict_->nwords() + args_->bucket, args_->dim);
+      second_embedding_->uniform(1.0 / args_->dim);
+
+      first_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
+      second_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
+
+      first_w1_->uniform(1.0 / args_->dim);
+      second_w1_->uniform(1.0 / args_->dim);
     }
-    second_dict_->build(second_fs);
-    second_fs.close();
-    std::cout << "second dict " << second_dict_->nwords() << std::endl;
+    model_fs.close();
 
     std::ifstream train_fs(args_->input);
     if (!train_fs.is_open()) {
-      std::cerr << "Input file cannot be opened!" << std::endl;
+      std::cerr << "Input file " << args->input << " cannot be opened!" << std::endl;
       exit(EXIT_FAILURE);
     }
 
@@ -559,19 +585,6 @@ namespace fasttext {
       if (numToken1 > 30 && numToken2 > 30) numToken += numToken1 + numToken2;
     }
     std::cout << "Total number of token: " << numToken << std::endl;
-    second_fs.close();
-
-    first_embedding_ = std::make_shared<Matrix>(first_dict_->nwords() + args_->bucket, args_->dim);
-    first_embedding_->uniform(1.0 / args_->dim);
-
-    second_embedding_ = std::make_shared<Matrix>(second_dict_->nwords() + args_->bucket, args_->dim);
-    second_embedding_->uniform(1.0 / args_->dim);
-
-    first_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
-    second_w1_ = std::make_shared<Matrix>(args_->dim, args_->dim);
-
-    first_w1_->uniform(1.0 / args_->dim);
-    second_w1_->uniform(1.0 / args_->dim);
 
     start = clock();
     tokenCount = 0;

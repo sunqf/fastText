@@ -233,6 +233,34 @@ void FastText::textVectors() {
   }
 }
 
+bool tcompare(std::pair<int32_t, real> first,
+             std::pair<int32_t, real> second) {
+  return (first.second > second.second);
+}
+
+void FastText::nbest() {
+  std::string word;
+  int32_t topN;
+  Vector vec(args_->dim);
+  std::vector<std::pair<int32_t, real>> id2prob(dict_->nwords());
+  while (std::cin >> word >> topN) {
+    auto id = dict_->getId(word);
+    if (id < 0) continue;
+    input_->getRow(id, vec);  
+    Vector curVec(args_->dim);
+    for (int32_t i = 0; i < dict_->nwords(); i++) {
+      if (i != id) {
+        input_->getRow(i, curVec);
+        real cos = cosine(vec, curVec);
+        id2prob[i] = std::make_pair(i, cos);
+      }
+    }
+    std::sort(id2prob.begin(), id2prob.end(), tcompare);
+    for (int i = 0; i < topN; i++) {
+      std::cout << dict_->getWord(id2prob[i].first) << " " << id2prob[i].second << std::endl;
+    }
+  }
+}
 void FastText::printVectors() {
   if (args_->model == model_name::sup) {
     textVectors();

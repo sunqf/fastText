@@ -110,6 +110,12 @@ void predict(int argc, char** argv) {
   exit(0);
 }
 
+void nbest(int argc, char** argv) {
+  FastText fasttext;
+  fasttext.loadModel(std::string(argv[2]));
+  fasttext.nbest();
+  exit(0);
+}
 void printVectors(int argc, char** argv) {
   if (argc != 3) {
     printPrintVectorsUsage();
@@ -142,6 +148,8 @@ int main(int argc, char** argv) {
     printVectors(argc, argv);
   } else if (command == "predict" || command == "predict-prob" ) {
     predict(argc, argv);
+  } else if (command == "nbest") {
+    nbest(argc, argv);
   } else {
     printUsage();
     exit(EXIT_FAILURE);

@@ -125,6 +125,15 @@ real Dictionary::getTF(int32_t id) const {
     return 0.0;
   }
 }
+
+int32_t Dictionary::getCount(int32_t id) const {
+  if (id < size_) {
+    return words_[id].count;
+  } else {
+    return -1;
+  }
+}
+
 uint32_t Dictionary::hash(const std::string& str) const {
   uint32_t h = 2166136261;
   for (size_t i = 0; i < str.size(); i++) {
@@ -336,8 +345,8 @@ int32_t Dictionary::getLine(const std::string &line,
   while (readWord(ss, token)) {
     if (token == EOS) break;
     int32_t wid = getId(token);
-    real tf = getTF(wid);
     if (wid < 0) continue;
+    real tf = getTF(wid);
     entry_type type = getType(wid);
     ntokens++;
     if (type == entry_type::word && !discard(wid, uniform(rng))) {
@@ -370,10 +379,11 @@ int32_t Dictionary::getWords(const std::string &line,
                              std::minstd_rand& rng) const {
   words.clear();
   std::vector<std::string> items = utils::split(line, '\t');
-  std::vector<int32_t> temp;
+  std::vector<std::pair<int32_t, real>> temp;
   int32_t ntokens = 0;
   for (int32_t i = 1; i < items.size(); i++) {
     ntokens += getLine(items[i], temp, rng);
+    words.insert(words.end(), temp.begin(), temp.end());
   }
   return ntokens;
 }

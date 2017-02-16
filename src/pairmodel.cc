@@ -85,8 +85,9 @@ namespace fasttext {
                                 Vector &hidden_input, Vector &hidden_output) const {
     hidden_input.zero();
     for (auto it = words.cbegin(); it != words.cend(); ++it) {
-      hidden_input.addRow(*embedding, it->first, it->second);
+      hidden_input.addRow(*embedding, it->first, 1.0);
     }
+    hidden_input.mul(1.0 / words.size());
     for (auto i = 0; i < hidden_output.m_; i++) {
       hidden_output.data_[i] = sigmoid(hidden_input.data_[i]);
     }
@@ -99,8 +100,9 @@ namespace fasttext {
     for (auto i = 0; i < hidden_input.m_; i++) {
       hidden1_grad.data_[i] *= sigmoid(hidden_input.data_[i]) * (1 - sigmoid(hidden_input.data_[i]));
     }
+    hidden1_grad.mul(1.0 / input.size());
     for (auto it = input.cbegin(); it != input.cend(); ++it) {
-      embedding->addRow(hidden1_grad, it->first, it->second);
+      embedding->addRow(hidden1_grad, it->first, 1.0);
     }
   }
 
@@ -116,6 +118,16 @@ namespace fasttext {
 
     first_output.mul(*first_w1_, first_hidden1_output);
     second_output.mul(*second_w1_, second_hidden1_output);
+
+/*
+    std::cout << "first hidden input " << first_hidden1_input << std::endl;
+    std::cout << "first hidden output " << first_hidden1_output << std::endl;
+    std::cout << "first output " << first_output << std::endl;
+    std::cout << "second hidden input " << second_hidden1_input << std::endl;
+    std::cout << "second hidden output " << second_hidden1_output << std::endl;
+    std::cout << "second output " << second_output << std::endl;
+*/
+
 
     return sigmoid(dot(first_output, second_output));
   }
