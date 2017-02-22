@@ -3,22 +3,25 @@
 //
 #include "docsim.h"
 
+#include <iostream>
+
 namespace fasttext {
 
-DocSim::DocSim(std::shared_ptr<Args> args): args_(args) {
-  loadModel(args_->input);
-}
 void DocSim::loadModel(const std::string &path) {
+  std::cout << path << std::endl;
   fastText_.loadModel(path);
 }
 
 
 real DocSim::predictProbability(const std::string &first, const std::string &second) const {
-  Vector firstVector(args_->dim);
-  Vector secondVector(args_->dim);
+  Vector firstVector(512);
+  Vector secondVector(512);
 
   fastText_.getVector(firstVector, first);
   fastText_.getVector(secondVector, second);
+
+  std::cout << firstVector << std::endl;
+  std::cout << secondVector << std::endl;
 
   return cosine(firstVector, secondVector);
 }

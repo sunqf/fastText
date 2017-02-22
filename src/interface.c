@@ -1,15 +1,17 @@
 #include "pairtext.h"
 #include "alstext.h"
+#include "docsim.h"
+
 using namespace fasttext;
 
 extern "C" {
-PairText* init(char* path) {
-  PairText* pairText = new PairText();
+DocSim* init(char* path) {
+  DocSim* pairText = new DocSim();
   pairText->loadModel(path);
   return pairText;
 }
 
-real predictProb(PairText* model, char* first, char* second) {
+real predictProb(DocSim* model, char* first, char* second) {
   if (model == 0) {
     printf("model hasn't been loaded.\n");
     exit(EXIT_FAILURE);
@@ -20,7 +22,7 @@ real predictProb(PairText* model, char* first, char* second) {
   return model->predictProbability(first_str, second_str);
 }
 
-real firstSimilarity(PairText* model, char* first, char* second) {
+real firstSimilarity(DocSim* model, char* first, char* second) {
   if (model == 0) {
     printf("model hasn't been loaded.\n");
     exit(EXIT_FAILURE);
@@ -30,7 +32,7 @@ real firstSimilarity(PairText* model, char* first, char* second) {
   return model->firstSimilarity(first_str, second_str);
 }
 
-real secondSimilarity(PairText* model, char* first, char* second) {
+real secondSimilarity(DocSim* model, char* first, char* second) {
   if (model == 0) {
     printf("model hasn't been loaded.\n");
     exit(EXIT_FAILURE);
@@ -41,7 +43,7 @@ real secondSimilarity(PairText* model, char* first, char* second) {
 }
 
 
-void destroy(PairText* model) {
+void destroy(DocSim* model) {
   if (model != 0) {
     delete model;
   }

@@ -301,7 +301,7 @@ int32_t Dictionary::getLine(std::istream& in,
     if (wid < 0) continue;
     entry_type type = getType(wid);
     ntokens++;
-    if (type == entry_type::word && !discard(wid, uniform(rng))) {
+    if (type == entry_type::word) {
       words.push_back(wid);
     }
     if (type == entry_type::label) {
@@ -326,7 +326,7 @@ int32_t Dictionary::getLine(const std::string &line,
     if (wid < 0) continue;
     entry_type type = getType(wid);
     ntokens++;
-    if (type == entry_type::word && !discard(wid, uniform(rng))) {
+    if (type == entry_type::word) {
       words.push_back(wid);
     }
     if (words.size() > MAX_LINE_SIZE && args_->model != model_name::sup) break;

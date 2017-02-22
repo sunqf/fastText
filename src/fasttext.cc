@@ -21,8 +21,13 @@
 
 namespace fasttext {
 
-void FastText::getVector(Vector& vec, const std::string& word) const {
-  const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
+void FastText::getVector(Vector& vec, const std::string& line) const {
+  //const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
+  std::vector<int32_t> ngrams;
+  std::cout << args_->wordNgrams << std::endl;
+  std::cout << line << std::endl;
+  dict_->getWords(line, ngrams, args_->wordNgrams, model_->rng);
+  std::cout << ngrams.size() << std::endl;
   vec.zero();
   for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
     vec.addRow(*input_, *it);
@@ -69,6 +74,9 @@ void FastText::loadModel(const std::string& filename) {
   }
   loadModel(ifs);
   ifs.close();
+  std::cout << "load model successfully" << std::endl;
+  std::cout << args_->dim << std::endl;
+  std::cout << dict_->nwords() << std::endl;
 }
 
 void FastText::loadModel(std::istream& in) {

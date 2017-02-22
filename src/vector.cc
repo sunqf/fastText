@@ -164,7 +164,7 @@ real dot(const Vector& first, const Vector& second) {
 real cosine(const Vector& first, const Vector& second) {
   real ff = dot(first, first);
   real ss = dot(second, second);
-  return dot(first, second) / sqrtf(ff * ss);
+  return dot(first, second) / (sqrtf(ff * ss) + 1e-15);
 }
 
 real xMy(const Vector& x, const Matrix& m, const Vector& y) {
